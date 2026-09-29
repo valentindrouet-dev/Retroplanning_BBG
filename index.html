@@ -310,7 +310,7 @@ var OPT=["c8","e6","t6","c27","e23","t24","e18","t19"];
 function T(id,t,n,d,a,o){o=o||{};return {id:id,t:t,n:n,d:d,a:a||[],s:o.s||0,p:o.p||0,anc:o.anc||"fab",o:OPT.indexOf(id)>=0};}
 var ORDER=["torna","edit","camino"];
 function toV3(x){x.games.sort(function(a,b){return ORDER.indexOf(a.id)-ORDER.indexOf(b.id);});x.games.forEach(function(g){g.tasks.forEach(function(t){if(t.s===1)t.p=Math.min(75,Math.max(25,Math.round((t.p||0)/25)*25));else t.p=t.s===2?100:0;});});x.v=3;return x;}
-function migrate(x){if(!x||!x.games)return null;if(x.v===1){x.games.forEach(function(g){g.tasks.forEach(function(t){t.o=OPT.indexOf(t.id)>=0;});});x.v=2;}if(x.v===2)toV3(x);if(x.v===3)toV4(x);if(x.v===4)toV5(x);return x.v===5?x:null;}
+function migrate(x){if(!x||!x.games)return null;if(x.v===1){x.games.forEach(function(g){g.tasks.forEach(function(t){t.o=OPT.indexOf(t.id)>=0;});});x.v=2;}if(x.v===2)toV3(x);if(x.v===3)toV4(x);if(x.v===4)toV5(x);return x.v>=5?x:null;}
 function defaults(){return toV5(toV4(toV3(defaults0())));}
 function toV5(x){if(!x.tracks)x.tracks=TRACKS.map(function(t){return [t[0],t[1]];});x.v=5;return x;}
 function trName(k){for(var i=0;i<state.tracks.length;i++)if(state.tracks[i][0]===k)return state.tracks[i][1];return k;}
@@ -443,6 +443,9 @@ var ui={tab:"all",filter:"all",confirmReset:false};
 try{var su=JSON.parse(sessionStorage.getItem(UIKEY));if(su){ui.tab=su.tab||"all";ui.filter=su.filter||"all";ui.scroll=su.scroll||0;}sessionStorage.removeItem(UIKEY);}catch(e){}
 
 function gOf(id){for(var i=0;i<state.games.length;i++)if(state.games[i].id===id)return state.games[i];return null;}
+/* v6 : plus de prérequis. Chaque tâche garde sa date actuelle, figée, et ne dépend plus d'aucune autre. */
+function toV6(x){x.games.forEach(function(g){var c=compute(g);g.tasks.forEach(function(t){if(!t.start)t.start=iso(c.rows[t.id].ps);});g.tasks.forEach(function(t){t.a=[];});});x.v=6;}
+if(state.v===5)toV6(state);
 
 function compute(g){
   var pr=state.prudence, M={}, succ={};
@@ -471,7 +474,7 @@ function header(){return '<header class="top"><div><h1>Rétroplanning</h1><p cla
 
 function summary(C){return '<div class="cards">'+state.games.map(function(g){var c=C[g.id],k=cls(c.marge);
  return '<button class="gcard" style="--g:var(--'+g.color+')" data-action="tab" data-tab="'+g.id+'" aria-current="'+(ui.tab===g.id)+'"><span class="gname">'+esc(g.name)+'</span><span class="big">'+(c.daysLeft>=0?"J-"+c.daysLeft:"J+"+(-c.daysLeft))+'</span><span class="lbl">avant l\'envoi en fabrication, le '+fmt(c.fab)+'</span>'+
- '<span class="verdict '+k+'">'+(c.marge>=0?"Marge de "+c.marge+" jour"+(c.marge>1?"s":""):"Retard projeté de "+(-c.marge)+" jour"+(c.marge<-1?"s":""))+'</span><span class="need">'+c.need+' jours de travail restant sur le chemin critique. Prêt à fabriquer le '+fmt(c.proj)+'.</span>'+
+ '<span class="verdict '+k+'">'+(c.marge>=0?"Marge de "+c.marge+" jour"+(c.marge>1?"s":""):"Retard projeté de "+(-c.marge)+" jour"+(c.marge<-1?"s":""))+'</span><span class="need">'+c.need+' jours jusqu\'à la fin de la dernière tâche. Prêt à fabriquer le '+fmt(c.proj)+'.</span>'+
  '<span class="bar"><i style="width:'+c.pct+'%"></i></span><span class="pct">'+c.pct+' % des tâches obligatoires réalisé'+(c.late?", "+c.late+" en retard sur le plan":"")+(c.nopt?". "+c.nopt+" facultative"+(c.nopt>1?"s":"")+" hors calcul":"")+'</span></button>';}).join("")+'</div>';}
 
 function tabs(){var g=gOf(ui.tab);return '<div class="tabs" role="tablist" style="--g:'+(g?"var(--"+g.color+")":"var(--ink)")+'"><button class="tab" role="tab" data-action="tab" data-tab="all" aria-selected="'+(ui.tab==="all")+'">Ensemble</button>'+state.games.map(function(x){return '<button class="tab" role="tab" data-action="tab" data-tab="'+x.id+'" aria-selected="'+(ui.tab===x.id)+'">'+esc(x.name)+'</button>';}).join("")+'<button class="tab" role="tab" data-action="tab" data-tab="team" aria-selected="'+(ui.tab==="team")+'">Équipe</button></div>';}
@@ -503,17 +506,16 @@ function etat(t,r){var d=r.delay;if(t.s===2)return {k:"done",x:"Fait"};
 function bar(t,r,R,g){var a=pos(r.ps,R),b=pos(r.pe,R);if(b<=a)b=a+.6;var e=etat(t,r);
   return '<span class="plan'+(t.s===2?" isdone":"")+(e.k==="late"&&!t.o?" islate":"")+(t.o?" isopt":"")+'" data-g="'+g.id+'" data-id="'+t.id+'" data-ps="'+iso(r.ps)+'" data-dd="'+r.dur+'" style="left:'+a+'%;width:'+(b-a)+'%" title="'+esc(t.n)+' : '+fmt(r.ps)+' → '+fmt(r.pe)+', '+(t.p||0)+' % fait. Glisse la barre pour la déplacer, ses bords pour changer la durée."><i style="width:'+(t.p||0)+'%"></i><span class="hl"></span><span class="hr"></span></span>';}
 
-function row(g,t,r,R){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=etat(t,r),preds=t.a.map(function(id){var x=g.tasks.filter(function(y){return y.id===id;})[0];return x?x.n:null;}).filter(Boolean);
+function row(g,t,r,R){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=etat(t,r);
  var meta='<span class="meta"><button class="req'+(t.o?" opt":"")+'" data-action="req" '+A+' title="Basculer obligatoire / facultatif">'+(t.o?"Facultatif":"Obligatoire")+'</button>'+whoBtn(g,t)+
-  '<button class="txt" data-action="deps" '+A+' title="Dépendances et échéance">'+(preds.length?"après "+esc(preds.join(", ")):"aucune dépendance")+'</button>'+
-  (t.anc!=="fab"?'<button class="tag" data-action="deps" '+A+'>→ '+(t.anc==="cannes"?"Cannes":"sortie")+'</button>':"")+'</span>';
+  (t.anc!=="fab"?'<button class="tag" data-action="deps" '+A+'>→ '+(t.anc==="cannes"?"Cannes":"sortie")+'</button>':'<button class="txt" data-action="deps" '+A+' title="Catégorie et échéance">→ fabrication</button>')+'</span>';
  return '<div class="row'+(s===2?" done":"")+(t.o?" isopt":"")+'" style="--g:var(--'+g.color+')">'+
  '<div class="gripcell"><span class="grip" draggable="true" data-action="grip" '+A+' title="Glisser pour déplacer la tâche" aria-hidden="true">⠿</span></div>'+
  '<button class="st" data-s="'+s+'" style="--pp:'+(t.p||0)+'%" data-action="cycle" '+A+' aria-label="'+esc(t.n)+' : '+(s===2?"fait":s===1?t.p+" % fait":"à faire")+'. Ajouter 25 %" title="Clic : +25 %"></button>'+
  '<div class="namecell"><span class="tname-in" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="name" '+A+' aria-label="Nom de la tâche">'+esc(t.n)+'</span>'+meta+
  '<button class="del" data-action="del" '+A+' aria-label="Supprimer la tâche '+esc(t.n)+'" title="Supprimer">×</button></div>'+
  '<div class="c-dur"><input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence"><button class="unit" data-action="unit" '+A+' title="Basculer jours / semaines">'+(t.u==="j"?"j":"sem.")+'</button></div>'+
- '<div class="c-due'+(t.start?" pinned":"")+(r.over>0&&t.s!==2?" over":"")+'"'+(r.over>0&&t.s!==2?' title="Finit '+r.over+' j après la date limite ('+fs(addD(r.pe,-r.over))+')"':'')+'><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span><span class="to">→ '+fs(r.pe)+'</span>'+(t.start?'<button class="rst" data-action="unpin" '+A+' title="Revenir à la date calculée" aria-label="Revenir à la date calculée">↺</button>':'')+'</div>'+
+ '<div class="c-due'+(r.over>0&&t.s!==2?" over":"")+'"'+(r.over>0&&t.s!==2?' title="Finit '+r.over+' j après la date limite ('+fs(addD(r.pe,-r.over))+')"':'')+'><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span><span class="to">→ '+fs(r.pe)+'</span>'+''+'</div>'+
  '<div class="c-etat"><span class="pill '+e.k+'">'+e.x+'</span></div>'+
  '<div class="tl" aria-hidden="true">'+lines(R,g)+bar(t,r,R,g)+'</div></div>';}
 
@@ -526,7 +528,7 @@ function gameView(g,c){var R=range([g],{[g.id]:c});
   ts.forEach(function(t){h+=row(g,t,c.rows[t.id],R);});
   h+='<div class="row addrow" data-track="'+tr[0]+'"><div></div><button data-action="add" data-g="'+g.id+'" data-t="'+tr[0]+'">+ Ajouter une tâche</button></div>';});
  h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Plan au plus tard, rempli selon l\'avancement</span><span><i class="lg-today"></i>Aujourd\'hui</span><span><i class="lg-fab"></i>Envoi en fabrication</span><span><i class="lg-cny"></i>Nouvel An chinois</span></div>';
- h+='<p class="foot">Chaque barre est la période où la tâche doit se faire pour tenir l\'envoi en fabrication. Elle ne bouge que si tu changes une durée, une dépendance ou une date. Quand tu avances une tâche, seule sa barre se remplit. L\'état compare ton avancement à la ligne d\'aujourd\'hui. La carte du jeu, en haut, donne la projection globale à partir du travail restant.</p>'+
+ h+='<p class="foot">Chaque barre est la période où la tâche doit se faire pour tenir l\'envoi en fabrication. Elle ne bouge que si tu changes sa durée ou sa date : modifier une tâche ne déplace jamais les autres. Quand tu avances une tâche, seule sa barre se remplit. L\'état compare ton avancement à la ligne d\'aujourd\'hui. La carte du jeu, en haut, donne la projection globale à partir du travail restant.</p>'+
  '<p class="foot"><button class="linkbtn'+(ui.confirmReset?" warn":"")+'" data-action="reset" data-g="'+g.id+'">'+(ui.confirmReset?"Confirmer : remettre "+esc(g.name)+" à la proposition initiale":"Remettre "+esc(g.name)+" à la proposition initiale")+'</button></p>';
  return h;}
 
@@ -600,8 +602,6 @@ function exportPdf(g,c){return loadJsPDF().then(function(JS){
   doc.text(cut(doc,t.n,col.d-col.n-3),col.n,y+3.3);
   var sub=[];if(t.o)sub.push("facultatif");
   var pw=(t.w||[]).map(pOf).filter(Boolean).map(function(x){return x.ic||initials(x.n);});if(pw.length)sub.push(pw.join(" "));
-  var pr=t.a.map(function(id){var x=g.tasks.filter(function(q){return q.id===id;})[0];return x?x.n:null;}).filter(Boolean);
-  if(pr.length)sub.push("après "+pr.join(", "));
   if(t.anc!=="fab")sub.push("échéance : "+(t.anc==="cannes"?"Cannes":"sortie"));
   doc.setFont("helvetica","normal");doc.setFontSize(6.3);doc.setTextColor("#777");
   if(sub.length)doc.text(cut(doc,sub.join("  ·  "),col.d-col.n-3),col.n,y+6.2);
@@ -658,7 +658,7 @@ app.addEventListener("click",function(e){var el=e.target.closest("[data-action]"
  if(a==="req"){o=findT(el);if(!o.t)return;o.t.o=!o.t.o;changed();return;}
  if(a==="cycle"){o=findT(el);if(!o.t)return;if(o.t.s===2){o.t.s=0;o.t.p=0;}else{o.t.p=(o.t.s===0?0:(o.t.p||0))+25;if(o.t.p>=100){o.t.s=2;o.t.p=100;}else o.t.s=1;}changed();var b=app.querySelector('[data-action="cycle"][data-id="'+o.t.id+'"]');if(b)b.focus();return;}
  if(a==="del"){o=findT(el);o.g.tasks=o.g.tasks.filter(function(x){return x.id!==o.t.id;});o.g.tasks.forEach(function(x){x.a=x.a.filter(function(y){return y!==o.t.id;});});changed();return;}
- if(a==="add"){var g=gOf(el.dataset.g),id=g.id.charAt(0)+Date.now().toString(36);g.tasks.push({id:id,t:el.dataset.t,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:ui.filter==="opt",w:[]});changed();var inp=app.querySelector('[data-action="name"][data-id="'+id+'"]');if(inp){inp.focus();inp.select();}return;}
+ if(a==="add"){var g=gOf(el.dataset.g),id=g.id.charAt(0)+Date.now().toString(36);g.tasks.push({id:id,t:el.dataset.t,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:ui.filter==="opt",w:[],start:iso(today)});changed();var inp=app.querySelector('[data-action="name"][data-id="'+id+'"]');if(inp){inp.focus();inp.select();}return;}
  if(a==="deps"){openDeps(findT(el));return;}
  if(a==="who"){openWho(findT(el));return;}
  if(a==="unit"){o=findT(el);if(!o.t)return;o.t.u=o.t.u==="j"?"":"j";changed();return;}
@@ -686,10 +686,8 @@ app.addEventListener("input",function(e){if(e.target.dataset.action==="prud"){va
 
 var dlg=document.createElement("dialog");document.body.appendChild(dlg);
 function openDeps(o){var g=o.g,t=o.t;
- dlg.innerHTML='<form method="dialog"><h2>'+esc(t.n)+'</h2><label class="field dlgf">Catégorie<select name="track">'+state.tracks.map(function(tr){return '<option value="'+tr[0]+'"'+(t.t===tr[0]?" selected":"")+'>'+esc(tr[1])+'</option>';}).join("")+'</select></label><label class="field dlgf">Échéance à tenir<select name="anc">'+Object.keys(ANC).map(function(a){return '<option value="'+a+'"'+(t.anc===a?" selected":"")+'>'+ANC[a]+'</option>';}).join("")+'</select></label><p class="dlgsub">Ne peut commencer qu\'après :</p><div class="deplist">'+state.tracks.map(function(tr){var ts=g.tasks.filter(function(x){return x.t===tr[0]&&x.id!==t.id;});if(!ts.length)return "";
- return '<fieldset><legend>'+tr[1]+'</legend>'+ts.map(function(x){return '<label><input type="checkbox" value="'+x.id+'"'+(t.a.indexOf(x.id)>=0?" checked":"")+'> '+esc(x.n)+'</label>';}).join("")+'</fieldset>';}).join("")+
- '</div><div class="dlgbar"><button class="btn" value="cancel">Annuler</button><button class="btn on" value="ok">Valider</button></div></form>';
- dlg.onclose=function(){if(dlg.returnValue==="ok"){t.a=[].map.call(dlg.querySelectorAll("input:checked"),function(i){return i.value;});t.anc=dlg.querySelector('select[name="anc"]').value;t.t=dlg.querySelector('select[name="track"]').value;changed();}};
+ dlg.innerHTML='<form method="dialog"><h2>'+esc(t.n)+'</h2><label class="field dlgf">Catégorie<select name="track">'+state.tracks.map(function(tr){return '<option value="'+tr[0]+'"'+(t.t===tr[0]?" selected":"")+'>'+esc(tr[1])+'</option>';}).join("")+'</select></label><label class="field dlgf">Échéance à tenir<select name="anc">'+Object.keys(ANC).map(function(a){return '<option value="'+a+'"'+(t.anc===a?" selected":"")+'>'+ANC[a]+'</option>';}).join("")+'</select></label><div class="dlgbar"><button class="btn" value="cancel">Annuler</button><button class="btn on" value="ok">Valider</button></div></form>';
+ dlg.onclose=function(){if(dlg.returnValue==="ok"){t.anc=dlg.querySelector('select[name="anc"]').value;t.t=dlg.querySelector('select[name="track"]').value;changed();}};
  dlg.returnValue="";dlg.showModal();}
 
 var dragId=null,dragG=null;
