@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Rétroplanning BBG</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;700;800&amp;display=swap" rel="stylesheet"><style id="css">:root{--bg:#EEF1EE;--surface:#FFFFFF;--ink:#16211B;--muted:#5B6860;--line:#D6DDD8;--soft:#F5F7F5;--late:#B8352A;--tight:#B97A0C;--ok:#2E7A4C;--camino:#3F7D4E;--edit:#C9912A;--torna:#3A78BC;--bbg:#7B4FB0;--focus:#2F5BD3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101512;--surface:#18201B;--ink:#E6ECE8;--muted:#98A59D;--line:#2B3530;--soft:#1D2620;--late:#E26B5E;--tight:#E0A84A;--ok:#5FB283;--camino:#6FB07F;--edit:#E3B25A;--torna:#6FA6E0;--bbg:#B394E3;--focus:#8FB0FF}}
-:root[data-theme="dark"]{--bg:#101512;--surface:#18201B;--ink:#E6ECE8;--muted:#98A59D;--line:#2B3530;--soft:#1D2620;--late:#E26B5E;--tight:#E0A84A;--ok:#5FB283;--camino:#6FB07F;--edit:#E3B25A;--torna:#6FA6E0;--bbg:#B394E3;--focus:#8FB0FF}
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Rétroplanning BBG</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;700;800&amp;display=swap" rel="stylesheet"><style id="css">:root{--bg:#EEF1EE;--surface:#FFFFFF;--ink:#16211B;--muted:#5B6860;--line:#D6DDD8;--soft:#F5F7F5;--late:#B8352A;--tight:#B97A0C;--ok:#2E7A4C;--camino:#3F7D4E;--edit:#C9912A;--torna:#3A78BC;--bbg:#7B4FB0;--dist:#C0392B;--focus:#2F5BD3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101512;--surface:#18201B;--ink:#E6ECE8;--muted:#98A59D;--line:#2B3530;--soft:#1D2620;--late:#E26B5E;--tight:#E0A84A;--ok:#5FB283;--camino:#6FB07F;--edit:#E3B25A;--torna:#6FA6E0;--bbg:#B394E3;--dist:#E8705F;--focus:#8FB0FF}}
+:root[data-theme="dark"]{--bg:#101512;--surface:#18201B;--ink:#E6ECE8;--muted:#98A59D;--line:#2B3530;--soft:#1D2620;--late:#E26B5E;--tight:#E0A84A;--ok:#5FB283;--camino:#6FB07F;--edit:#E3B25A;--torna:#6FA6E0;--bbg:#B394E3;--dist:#E8705F;--focus:#8FB0FF}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
@@ -537,7 +537,7 @@ if(loc&&(!emb||(loc.savedAt||0)>(emb.savedAt||0))){state=loc;localAhead=!!emb||l
 var ui={tab:"all",filter:"all",confirmReset:false,sel:[],anchor:null};
 try{var su=JSON.parse(sessionStorage.getItem(UIKEY));if(su){ui.tab=su.tab||"all";ui.filter=su.filter||"all";ui.scroll=su.scroll||0;}sessionStorage.removeItem(UIKEY);}catch(e){}
 
-function gOf(id){for(var i=0;i<state.games.length;i++)if(state.games[i].id===id)return state.games[i];return id==="bbg"&&state.bbg?state.bbg:null;}
+function gOf(id){for(var i=0;i<state.games.length;i++)if(state.games[i].id===id)return state.games[i];return id==="bbg"&&state.bbg?state.bbg:id==="dist"&&state.dist?state.dist:null;}
 /* v6 : plus de prérequis. Chaque tâche garde sa date actuelle, figée, et ne dépend plus d'aucune autre. */
 function toV6(x){x.games.forEach(function(g){var c=compute(g);g.tasks.forEach(function(t){if(!t.start)t.start=iso(c.rows[t.id].ps);});g.tasks.forEach(function(t){t.a=[];});});x.v=6;}
 function ensureState(){
@@ -547,14 +547,20 @@ if(!state.bbg)state.bbg={id:"bbg",name:"BBG (global)",color:"bbg",fab:"2099-12-3
 if(!state.com)state.com={budget:{}};if(!state.com.budget)state.com.budget={};
 if(!state.com.tracks)state.com.tracks=[["c_torna","TornaDice"],["c_edit","EDIT"],["c_camino","Camino"],["c_bbg","BBG (global)"]];
 if(!state.com.order)state.com.order=[];
+if(!state.dist){state.dist={id:"dist",name:"Distribution",color:"dist",fab:"2099-12-31",sortie:"2099-12-31",tasks:[]};
+ if(!state.com.tracks.some(function(x){return x[0]==="c_dist";}))state.com.tracks.push(["c_dist","Distribution"]);
+ state.bbg.tasks=state.bbg.tasks.filter(function(t){if(t.dist){delete t.dist;if(t.ct==="c_bbg"||!t.ct)t.ct="c_dist";state.dist.tasks.push(t);return false;}return true;});}
 }
 ensureState();
 /* Catégorie d'une ligne dans l'onglet Communication (indépendante de sa catégorie dans le jeu) */
 function ctOf(g,t){var ks=state.com.tracks.map(function(x){return x[0];});if(t.ct&&ks.indexOf(t.ct)>=0)return t.ct;return ks.indexOf("c_"+g.id)>=0?"c_"+g.id:ks[0];}
 function newKey(p){return p+Date.now().toString(36);}
-function allG(){return state.games.concat([state.bbg]);}
+function allG(){return state.games.concat([state.bbg,state.dist]);}
+/* Sections hors jeux : BBG global et Distribution */
+function isX(g){return g.id==="bbg"||g.id==="dist";}
+function gShort(g){return gShort(g);}
 /* Une ligne est dans l'onglet Communication si elle est de catégorie Communication (sauf retrait manuel) ou ajoutée à la main. */
-function inCom(g,t){return g.id==="bbg"||!!t.ci||(t.t==="com"&&!t.cx);}
+function inCom(g,t){return isX(g)||!!t.ci||(t.t==="com"&&!t.cx);}
 function comOut(t){t.ci=false;if(t.t==="com")t.cx=true;}
 function comIn(t){t.ci=true;t.cx=false;}
 
@@ -620,17 +626,17 @@ function bar(t,r,R,g){var a=pos(r.ps,R),b=pos(r.pe,R);if(b<=a)b=a+.6;var e=etat(
 function row(g,t,r,R,com){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=etat(t,r),ic=inCom(g,t);
  var meta='<span class="meta">'+(com?'<select class="gsel" data-action="gmove" '+A+' title="Changer le jeu concerné par cette ligne" aria-label="Jeu concerné">'+allG().map(function(x){return '<option value="'+x.id+'"'+(x.id===g.id?" selected":"")+'>'+esc(x.id==="bbg"?"BBG global":x.name)+'</option>';}).join("")+'</select>':"")+'<button class="req'+(t.o?" opt":"")+'" data-action="req" '+A+' title="Basculer obligatoire / facultatif">'+(t.o?"Facultatif":"Obligatoire")+'</button>'+whoBtn(g,t)+
   
-  '<button class="disttog'+(t.dist?"":" off")+'" data-action="dist" '+A+' aria-pressed="'+!!t.dist+'" title="'+(t.dist?"Retirer l’étiquette Distribution":"Ajouter l’étiquette Distribution")+'">'+(t.dist?"Distribution":"+ Distribution")+'</button>'+(com||g.id==="bbg"?"":'<button class="comtog'+(ic?"":" off")+'" data-action="comtog" '+A+' aria-pressed="'+ic+'" title="'+(ic?"Retirer de l’onglet Communication":"Ajouter à l’onglet Communication")+'">'+(ic?"Com":"+ Com")+'</button>')+'</span>';
+  (t.dist?'<button class="disttog" data-action="dist" '+A+' title="Retirer l’étiquette Distribution">Distribution</button>':"")+(com||isX(g)?"":'<button class="comtog'+(ic?"":" off")+'" data-action="comtog" '+A+' aria-pressed="'+ic+'" title="'+(ic?"Retirer de l’onglet Communication":"Ajouter à l’onglet Communication")+'">'+(ic?"Com":"+ Com")+'</button>')+'</span>';
  return '<div class="row'+(s===2?" done":"")+(t.o?" isopt":"")+(ui.sel.indexOf(g.id+"|"+t.id)>=0?" sel":"")+'" style="--g:var(--'+g.color+')" data-track="'+(com?ctOf(g,t):t.t)+'">'+
  '<div class="gripcell"><span class="grip" draggable="true" data-action="grip" data-kind="'+(com?"comtask":"task")+'" '+A+' title="Glisser pour déplacer la tâche, y compris vers une autre catégorie. Maj+clic ou Cmd/Ctrl+clic pour sélectionner plusieurs lignes" aria-hidden="true">⠿</span></div>'+
  '<button class="st" data-s="'+s+'" style="--pp:'+(t.p||0)+'%" data-action="cycle" '+A+' aria-label="'+esc(t.n)+' : '+(s===2?"fait":s===1?t.p+" % fait":"à faire")+'. Ajouter 25 %" title="Clic : +25 %"></button>'+
  '<div class="namecell"><span class="tname-in" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="name" '+A+' aria-label="Nom de la tâche">'+esc(t.n)+'</span>'+meta+
- (com&&g.id!=="bbg"?'<button class="del" data-action="comrm" '+A+' aria-label="Retirer '+esc(t.n)+' de l’onglet Communication" title="Retirer de l’onglet Communication (la tâche reste dans '+esc(g.name)+')">×</button>':'<button class="del" data-action="del" '+A+' aria-label="Supprimer la tâche '+esc(t.n)+'" title="Supprimer">×</button>')+'<button class="dup" data-action="dup" '+A+' aria-label="Dupliquer la tâche '+esc(t.n)+'" title="Dupliquer">⧉</button></div>'+
+ (com&&!isX(g)?'<button class="del" data-action="comrm" '+A+' aria-label="Retirer '+esc(t.n)+' de l’onglet Communication" title="Retirer de l’onglet Communication (la tâche reste dans '+esc(g.name)+')">×</button>':'<button class="del" data-action="del" '+A+' aria-label="Supprimer la tâche '+esc(t.n)+'" title="Supprimer">×</button>')+'<button class="dup" data-action="dup" '+A+' aria-label="Dupliquer la tâche '+esc(t.n)+'" title="Dupliquer">⧉</button></div>'+
  '<div class="c-dur">'+(t.u==="p"?'<span class="msk" aria-hidden="true">◆</span>':'<input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence">')+'<button class="unit" data-action="unit" '+A+' title="Changer l’unité : semaines, jours, ou jour J (événement ponctuel, un seul jour)">'+(t.u==="j"?"j":t.u==="p"?"jour J":"sem.")+'</button></div>'+
  '<div class="c-due"><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span>'+(t.u==="p"?'<span class="to">ponctuel</span>':'<span class="to">→ '+fs(r.pe)+'</span>')+''+''+'</div>'+
  '<div class="c-etat"><span class="pill '+e.k+'">'+e.x+'</span></div>'+
  (com?'<div class="c-cost"><input class="num cost" type="number" min="0" step="10" value="'+(t.cost||"")+'" placeholder="0" data-action="cost" '+A+' aria-label="Coût de '+esc(t.n)+' en euros">€</div>':"")+
- '<div class="tl" aria-hidden="true">'+lines(R,g.id==="bbg"?null:g)+bar(t,r,R,g)+'</div></div>';}
+ '<div class="tl" aria-hidden="true">'+lines(R,isX(g)?null:g)+bar(t,r,R,g)+'</div></div>';}
 
 function gameView(g,c){var R=range([g],{[g.id]:c});
  var h='<div class="printhead"><b>'+esc(g.name)+'</b> · rétroplanning au '+fmt(today)+' · envoi en fabrication le '+fmt(c.fab)+' · sortie le '+fmt(parse(g.sortie))+' · '+(c.marge>=0?"marge de "+c.marge+" jours":"retard projeté de "+(-c.marge)+" jours")+' · coefficient de prudence ×'+num(state.prudence.toFixed(2))+'</div>'+'<div class="toolbar"><label class="field">Envoi en fabrication<input type="date" value="'+g.fab+'" data-action="fab" data-g="'+g.id+'"></label><label class="field">Sortie<input type="date" value="'+g.sortie+'" data-action="sortie" data-g="'+g.id+'"></label><span class="spacer"></span>'+
@@ -685,7 +691,7 @@ function prevDate(el){var r=el&&el.closest(".row");while(r&&(r=r.previousElement
 function addComTask(ck,start){var gid=ck.indexOf("c_")===0&&gOf(ck.slice(2))?ck.slice(2):null;
  if(!gid){var n={};allG().forEach(function(g){g.tasks.forEach(function(t){if(inCom(g,t)&&ctOf(g,t)===ck)n[g.id]=(n[g.id]||0)+1;});});var best=0;Object.keys(n).forEach(function(k){if(n[k]>best){best=n[k];gid=k;}});}
  var cg=gOf(gid)||state.bbg,cid=cg.id.charAt(0)+Date.now().toString(36),tk=state.tracks.some(function(x){return x[0]==="com";})?"com":state.tracks[0][0];
- var nt={id:cid,t:cg.id==="bbg"?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:start||iso(today),ct:ck};if(cg.id!=="bbg"&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
+ var nt={id:cid,t:isX(cg)?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:start||iso(today),ct:ck};if(!isX(cg)&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
  var ks=comKeys(),pos=ks.length;ks.forEach(function(x,i){if(x.tr===ck)pos=i+1;});var ord=ks.map(function(x){return x.k;});ord.splice(pos,0,cg.id+"|"+cid);state.com.order=ord;
  changed();focusName(cid);}
 /* Change le jeu d'une ligne (onglet Communication) : la tâche passe dans l'autre jeu, ou en BBG global, à la même place dans l'onglet */
@@ -693,7 +699,7 @@ function moveGame(o,gid){var from=o.g,t=o.t,to=gOf(gid);if(!to||to===from)return
  var ks=comKeys().map(function(x){return x.k;});if(!ks.length)ks=state.com.order.slice();var oldK=from.id+"|"+t.id;
  from.tasks=from.tasks.filter(function(x){return x!==t;});
  if(to.tasks.some(function(x){return x.id===t.id;}))t.id=to.id.charAt(0)+Date.now().toString(36);
- if(to.id!=="bbg"&&t.t!=="com")t.ci=true;t.cx=false;var cur=ctOf(from,t),TK=state.com.tracks.map(function(x){return x[0];});t.ct=cur==="c_"+from.id&&TK.indexOf("c_"+to.id)>=0?"c_"+to.id:cur;
+ if(!isX(to)&&t.t!=="com")t.ci=true;t.cx=false;var cur=ctOf(from,t),TK=state.com.tracks.map(function(x){return x[0];});t.ct=cur==="c_"+from.id&&TK.indexOf("c_"+to.id)>=0?"c_"+to.id:cur;
  to.tasks.push(t);var j=ks.indexOf(oldK);if(j>=0)ks[j]=to.id+"|"+t.id;state.com.order=ks;ui.sel=[];changed();}
 function dupTask(o){var g=o.g,t=o.t,i=g.tasks.indexOf(t);if(i<0)return;var c=JSON.parse(JSON.stringify(t));c.id=g.id.charAt(0)+Date.now().toString(36);c.n=t.n+" (copie)";c.s=0;c.p=0;g.tasks.splice(i+1,0,c);
  var me=g.id+"|"+t.id,ks=comKeys().map(function(x){return x.k;});if(!ks.length)ks=state.com.order.slice();var j=ks.indexOf(me);if(j>=0){ks.splice(j+1,0,g.id+"|"+c.id);state.com.order=ks;}
@@ -707,7 +713,7 @@ function openComPick(gid,ck){var gs=state.games.filter(function(g){return !gid||
 
 function monthData(){var G=allG(),M={},keys=[];
  G.forEach(function(g){var c=compute(g);g.tasks.forEach(function(t){if(!inCom(g,t)||!(+t.cost))return;var d=c.rows[t.id].ps,k=d.getFullYear()+"-"+pad(d.getMonth()+1);
-  if(!M[k]){M[k]={tot:0,by:{},list:[]};keys.push(k);}M[k].tot+=+t.cost;M[k].by[g.id]=(M[k].by[g.id]||0)+(+t.cost);M[k].list.push((g.id==="bbg"?"BBG":g.name)+" · "+t.n+" : "+eur(t.cost));});});
+  if(!M[k]){M[k]={tot:0,by:{},list:[]};keys.push(k);}M[k].tot+=+t.cost;M[k].by[g.id]=(M[k].by[g.id]||0)+(+t.cost);M[k].list.push((gShort(g))+" · "+t.n+" : "+eur(t.cost));});});
  keys.sort();var all=[];if(keys.length){var p0=keys[0].split("-").map(Number),p1=keys[keys.length-1].split("-").map(Number),y=p0[0],m=p0[1];while(y<p1[0]||(y===p1[0]&&m<=p1[1])){all.push(y+"-"+pad(m));m++;if(m>12){m=1;y++;}}}
  var B=0;G.forEach(function(g){B+=+state.com.budget[g.id]||0;});return {G:G,M:M,all:all,B:B};}
 function openMonths(){var md=monthData(),G=md.G,M=md.M,all=md.all,B=md.B;
@@ -715,7 +721,7 @@ function openMonths(){var md=monthData(),G=md.G,M=md.M,all=md.all,B=md.B;
  var cum=0,tots={},T=0;
  var h='<form method="dialog"><h2>Coûts de communication, mois par mois</h2><div class="mscroll">';
  if(!all.length)h+='<p>Aucun coût saisi pour l’instant. Renseigne la colonne Coût dans l’onglet Communication.</p>';
- else{h+='<table class="mtab"><thead><tr><th>Mois</th>'+G.map(function(g){return '<th style="--g:var(--'+g.color+')"><span class="dot"></span>'+esc(g.id==="bbg"?"BBG":g.name)+'</th>';}).join("")+'<th>Total</th><th aria-hidden="true"></th><th>Cumul</th></tr></thead><tbody>';
+ else{h+='<table class="mtab"><thead><tr><th>Mois</th>'+G.map(function(g){return '<th style="--g:var(--'+g.color+')"><span class="dot"></span>'+esc(gShort(g))+'</th>';}).join("")+'<th>Total</th><th aria-hidden="true"></th><th>Cumul</th></tr></thead><tbody>';
   all.forEach(function(k){var x=M[k]||{tot:0,by:{},list:[]},pk=k.split("-").map(Number);cum+=x.tot;T+=x.tot;
    h+='<tr title="'+esc(x.list.join("\n"))+'"><td>'+MOIS[pk[1]-1]+' '+pk[0]+'</td>'+G.map(function(g){var v=x.by[g.id]||0;tots[g.id]=(tots[g.id]||0)+v;return '<td class="'+(v?"":"z")+'">'+(v?eur(v):"—")+'</td>';}).join("")+
    '<td><b>'+(x.tot?eur(x.tot):"—")+'</b></td><td class="bar"><i style="width:'+(mx?x.tot/mx*100:0)+'%"></i></td><td class="'+(B&&cum>B?"over":"")+'">'+eur(cum)+'</td></tr>';});
@@ -830,7 +836,7 @@ function pdfCom(doc,first){var W=297,H=210,M=8,y=0,page=0,C={};allG().forEach(fu
   doc.text(pdfTxt(eur(c.tot)),X.c,y+4,{align:"right"});y+=6;
   c.items.forEach(function(i){need(6.5);var t=i.t,r=i.r,e=etat(t,r);
    doc.setFont("helvetica",t.s===2?"normal":"bold");doc.setFontSize(7.8);doc.setTextColor(t.s===2?"#777":"#111");doc.text(cut(doc,t.n,X.g-X.n-4),X.n,y+4.2);
-   doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.setTextColor("#555");doc.text(pdfTxt(i.g.id==="bbg"?"BBG":i.g.name),X.g,y+4.2);
+   doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.setTextColor("#555");doc.text(pdfTxt(gShort(i.g)),X.g,y+4.2);
    doc.text(pdfTxt(t.u==="p"?fs(r.ps)+" (jour J)":fs(r.ps)+" - "+fs(r.pe)),X.d,y+4.2);
    doc.setTextColor(e.k==="late"?"#B8352A":e.k==="tight"?"#9a6508":e.k==="ok"||e.k==="done"?"#2E7A4C":"#777");doc.text(pdfTxt(e.x),X.e,y+4.2);
    doc.setTextColor("#111");doc.text(pdfTxt(+t.cost?eur(t.cost):"-"),X.c,y+4.2,{align:"right"});
@@ -844,7 +850,7 @@ function pdfCom(doc,first){var W=297,H=210,M=8,y=0,page=0,C={};allG().forEach(fu
  md.G.forEach(function(g){var tot=0;g.tasks.forEach(function(t){if(inCom(g,t))tot+=+t.cost||0;});var bud=+state.com.budget[g.id]||0;T+=tot;B+=bud;brow(g.name,tot,bud);});brow("Total communication",T,B,true);
  if(md.all.length){need(14+5.5*(md.all.length+1));y+=6;doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor("#111");doc.text("Mois par mois",M,y);y+=5;
   var cx=[60,85,110,135,165,195];doc.setFontSize(6.5);doc.setFont("helvetica","normal");doc.setTextColor("#777");doc.text("MOIS",X.n,y);
-  md.G.forEach(function(g,k){doc.text(pdfTxt((g.id==="bbg"?"BBG":g.name).toUpperCase()),cx[k],y,{align:"right"});});doc.text("TOTAL",cx[4],y,{align:"right"});doc.text("CUMUL",cx[5],y,{align:"right"});y+=2;
+  md.G.forEach(function(g,k){doc.text(pdfTxt((gShort(g)).toUpperCase()),cx[k],y,{align:"right"});});doc.text("TOTAL",cx[4],y,{align:"right"});doc.text("CUMUL",cx[5],y,{align:"right"});y+=2;
   var cum=0;md.all.forEach(function(k){need(5.5);var x=md.M[k]||{tot:0,by:{}},pk=k.split("-").map(Number);cum+=x.tot;doc.setFontSize(7.5);doc.setTextColor("#111");doc.setFont("helvetica","normal");doc.text(pdfTxt(MOIS[pk[1]-1]+" "+pk[0]),X.n,y+4);
    md.G.forEach(function(g,j){var v=x.by[g.id]||0;doc.text(pdfTxt(v?eur(v):"-"),cx[j],y+4,{align:"right"});});doc.setFont("helvetica","bold");doc.text(pdfTxt(x.tot?eur(x.tot):"-"),cx[4],y+4,{align:"right"});
    doc.setFont("helvetica","normal");doc.setTextColor(md.B&&cum>md.B?"#B8352A":"#111");doc.text(pdfTxt(eur(cum)),cx[5],y+4,{align:"right"});doc.setDrawColor("#dde3df");doc.line(M,y+5.5,200,y+5.5);y+=5.5;});
@@ -862,7 +868,7 @@ var impInput=document.createElement("input");impInput.type="file";impInput.accep
 impInput.addEventListener("change",function(){var f=impInput.files&&impInput.files[0];impInput.value="";if(!f)return;var rd=new FileReader();
  rd.onload=function(){var data=null,x=null;try{data=JSON.parse(rd.result);x=migrate(JSON.parse(JSON.stringify(data&&data.state?data.state:data)));}catch(e){x=null;}
   if(!x){dlg.innerHTML='<form method="dialog"><h2>Fichier non reconnu</h2><p>Ce fichier n’est pas une sauvegarde du rétroplanning (fichier JSON exporté avec « Sauvegarde JSON »).</p><div class="dlgbar"><button class="btn on" value="ok">Fermer</button></div></form>';dlg.onclose=null;dlg.returnValue="";dlg.showModal();return;}
-  var nt=0;x.games.forEach(function(g){nt+=g.tasks.length;});if(x.bbg)nt+=x.bbg.tasks.length;
+  var nt=0;x.games.forEach(function(g){nt+=g.tasks.length;});if(x.bbg)nt+=x.bbg.tasks.length;if(x.dist)nt+=x.dist.tasks.length;
   var when=data&&data.exportedAt?new Date(data.exportedAt):(x.savedAt?new Date(x.savedAt):null);
   dlg.innerHTML='<form method="dialog"><h2>Importer cette sauvegarde ?</h2><p class="imp-sum"><b>'+esc(f.name)+'</b>'+(when&&!isNaN(when)?'<br>sauvegardée le '+when.getDate()+' '+MOIS[when.getMonth()]+' '+when.getFullYear()+' à '+pad(when.getHours())+'h'+pad(when.getMinutes()):'')+'<br>'+x.games.length+' jeux, '+nt+' tâches</p><p>Toutes les données actuelles de cette page seront remplacées. Pense à faire d’abord une « Sauvegarde JSON » de l’état actuel si tu veux pouvoir revenir en arrière.</p><div class="dlgbar"><button class="btn" value="cancel">Annuler</button><button class="btn on warn" value="ok">Remplacer les données</button></div></form>';
   dlg.onclose=function(){if(dlg.returnValue!=="ok")return;state=x;ensureState();ui.tab="all";ui.filter="all";changed();window.scrollTo(0,0);};dlg.returnValue="";dlg.showModal();};
@@ -871,7 +877,7 @@ function busy(el,label,job){el.disabled=true;el.textContent="Préparation…";
  job().then(function(){el.disabled=false;el.textContent=label;},function(err){el.disabled=false;var cd=err&&err.code;el.textContent=cd==="declined"?label:cd?"Indisponible ici":"Échec";setTimeout(function(){el.textContent=label;},2500);});}
 
 function renderChip(){var el=document.getElementById("chip");if(!el)return;var m={local:"Enregistré dans ce navigateur",pending:"Modifications en attente",saving:"Enregistrement…",saved:"Enregistré",readonly:"Lecture seule, enregistré dans ce navigateur",error:"Échec de l'enregistrement, nouvel essai à la prochaine modification"};el.dataset.s=saveState;el.textContent=m[saveState];}
-function render(){var ae=document.activeElement,fk=ae&&ae.dataset&&ae.dataset.action?[ae.dataset.action,ae.dataset.id||"",ae.dataset.g||"",ae.dataset.tab||"",ae.dataset.f||""]:null;var C={};allG().forEach(function(g){C[g.id]=compute(g);});var g=ui.tab==="bbg"?null:gOf(ui.tab);if(!g&&ui.tab!=="all"&&ui.tab!=="team"&&ui.tab!=="com")ui.tab="all";
+function render(){var ae=document.activeElement,fk=ae&&ae.dataset&&ae.dataset.action?[ae.dataset.action,ae.dataset.id||"",ae.dataset.g||"",ae.dataset.tab||"",ae.dataset.f||""]:null;var C={};allG().forEach(function(g){C[g.id]=compute(g);});var g=ui.tab==="bbg"||ui.tab==="dist"?null:gOf(ui.tab);if(!g&&ui.tab!=="all"&&ui.tab!=="team"&&ui.tab!=="com")ui.tab="all";
  app.innerHTML='<div class="wrap">'+header()+summary(C)+tabs()+(g?gameView(g,C[g.id]):ui.tab==='team'?teamView(C):ui.tab==='com'?comView(C):overview(C))+'</div>'+(ui.sel.length>1?'<div class="selbar" role="status">'+ui.sel.length+' lignes sélectionnées : glisse l’une d’elles (⠿) pour toutes les déplacer<button data-action="selclear">Désélectionner</button></div>':'');renderChip();
  if(fk){var sel='[data-action="'+fk[0]+'"]'+(fk[1]?'[data-id="'+fk[1]+'"]':"")+(fk[2]?'[data-g="'+fk[2]+'"]':"")+(fk[3]?'[data-tab="'+fk[3]+'"]':"")+(fk[4]?'[data-f="'+fk[4]+'"]':"");var ns=app.querySelectorAll(sel);for(var i=0;i<ns.length;i++){if(ns[i].offsetParent!==null){ns[i].focus();break;}}}
  fixMonths();}
@@ -946,7 +952,7 @@ app.addEventListener("change",function(e){var el=e.target,a=el.dataset.action,o,
  if(a==="prud"){state.prudence=parseFloat(el.value)||1;changed();return;}
  if(a==="fab"||a==="sortie"){if(!el.value)return;gOf(el.dataset.g)[a]=el.value;setTimeout(changed,0);return;}
  if(a==="comnew"){var cg=gOf(el.value);if(!cg)return;var cid=cg.id.charAt(0)+Date.now().toString(36),ck=el.dataset.k,tk=state.tracks.some(function(x){return x[0]==="com";})?"com":state.tracks[0][0];
-  var nt={id:cid,t:cg.id==="bbg"?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:iso(today),ct:ck};if(cg.id!=="bbg"&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
+  var nt={id:cid,t:isX(cg)?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:iso(today),ct:ck};if(!isX(cg)&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
   setTimeout(function(){changed();var ni=app.querySelector('[data-action="name"][data-id="'+cid+'"]');if(ni){ni.focus();document.execCommand&&document.execCommand("selectAll",false,null);}},0);return;}
  if(a==="gmove"){o=findT(el);if(o.t)moveGame(o,el.value);return;}
  if(a==="budget"){var bv=parseFloat(el.value);state.com.budget[el.dataset.k]=isNaN(bv)?0:Math.max(0,bv);setTimeout(changed,0);return;}
