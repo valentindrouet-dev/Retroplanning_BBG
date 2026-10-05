@@ -674,10 +674,12 @@ function comView(C){
 function comKeys(){return [].map.call(app.querySelectorAll('.comgrid [data-action="grip"][data-kind="comtask"]'),function(x){return {k:x.dataset.g+"|"+x.dataset.id,tr:x.closest(".row").dataset.track};});}
 function focusName(id){var ni=app.querySelector('[data-action="name"][data-id="'+id+'"]');if(ni){ni.focus();document.execCommand&&document.execCommand("selectAll",false,null);}}
 /* Nouvelle ligne dans une catégorie Communication : jeu déduit de la catégorie (ou de ses lignes), sinon BBG global */
-function addComTask(ck){var gid=ck.indexOf("c_")===0&&gOf(ck.slice(2))?ck.slice(2):null;
+/* Date de début d'une nouvelle ligne : celle de la ligne juste au-dessus (sinon aujourd'hui) */
+function prevDate(el){var r=el&&el.closest(".row");while(r&&(r=r.previousElementSibling)){var d=r.querySelector("input.dt");if(d&&d.value)return d.value;}return iso(today);}
+function addComTask(ck,start){var gid=ck.indexOf("c_")===0&&gOf(ck.slice(2))?ck.slice(2):null;
  if(!gid){var n={};allG().forEach(function(g){g.tasks.forEach(function(t){if(inCom(g,t)&&ctOf(g,t)===ck)n[g.id]=(n[g.id]||0)+1;});});var best=0;Object.keys(n).forEach(function(k){if(n[k]>best){best=n[k];gid=k;}});}
  var cg=gOf(gid)||state.bbg,cid=cg.id.charAt(0)+Date.now().toString(36),tk=state.tracks.some(function(x){return x[0]==="com";})?"com":state.tracks[0][0];
- var nt={id:cid,t:cg.id==="bbg"?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:iso(today),ct:ck};if(cg.id!=="bbg"&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
+ var nt={id:cid,t:cg.id==="bbg"?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:start||iso(today),ct:ck};if(cg.id!=="bbg"&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
  var ks=comKeys(),pos=ks.length;ks.forEach(function(x,i){if(x.tr===ck)pos=i+1;});var ord=ks.map(function(x){return x.k;});ord.splice(pos,0,cg.id+"|"+cid);state.com.order=ord;
  changed();focusName(cid);}
 /* Change le jeu d'une ligne (onglet Communication) : la tâche passe dans l'autre jeu, ou en BBG global, à la même place dans l'onglet */
@@ -915,11 +917,11 @@ app.addEventListener("click",function(e){var el=e.target.closest("[data-action]"
  if(a==="req"){o=findT(el);if(!o.t)return;o.t.o=!o.t.o;changed();return;}
  if(a==="cycle"){o=findT(el);if(!o.t)return;if(o.t.s===2){o.t.s=0;o.t.p=0;}else{o.t.p=(o.t.s===0?0:(o.t.p||0))+25;if(o.t.p>=100){o.t.s=2;o.t.p=100;}else o.t.s=1;}changed();var b=app.querySelector('[data-action="cycle"][data-id="'+o.t.id+'"]');if(b)b.focus();return;}
  if(a==="del"){o=findT(el);o.g.tasks=o.g.tasks.filter(function(x){return x.id!==o.t.id;});o.g.tasks.forEach(function(x){x.a=x.a.filter(function(y){return y!==o.t.id;});});changed();return;}
- if(a==="add"){var g=gOf(el.dataset.g),id=g.id.charAt(0)+Date.now().toString(36);g.tasks.push({id:id,t:el.dataset.t,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:ui.filter==="opt",w:[],start:iso(today)});changed();var inp=app.querySelector('[data-action="name"][data-id="'+id+'"]');if(inp){inp.focus();document.execCommand&&document.execCommand("selectAll",false,null);}return;}
+ if(a==="add"){var g=gOf(el.dataset.g),id=g.id.charAt(0)+Date.now().toString(36);g.tasks.push({id:id,t:el.dataset.t,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:ui.filter==="opt",w:[],start:prevDate(el)});changed();var inp=app.querySelector('[data-action="name"][data-id="'+id+'"]');if(inp){inp.focus();document.execCommand&&document.execCommand("selectAll",false,null);}return;}
  if(a==="deps"){openDeps(findT(el));return;}
  if(a==="compick"){openComPick(el.dataset.g,el.dataset.k);return;}
  if(a==="months"){openMonths();return;}
- if(a==="comadd"){addComTask(el.dataset.k);return;}
+ if(a==="comadd"){addComTask(el.dataset.k,prevDate(el));return;}
  if(a==="dup"){o=findT(el);if(o.t)dupTask(o);return;}
  if(a==="tradd"||a==="ctradd"){var L=a==="tradd"?state.tracks:state.com.tracks,nk=newKey(a==="tradd"?"k":"c");L.push([nk,"Nouvelle catégorie"]);changed();var tn=app.querySelector('[data-action="'+(a==="tradd"?"trname":"ctrname")+'"][data-k="'+nk+'"]');if(tn){tn.focus();document.execCommand&&document.execCommand("selectAll",false,null);}return;}
  if(a==="trdel"){state.tracks=state.tracks.filter(function(x){return x[0]!==el.dataset.k;});changed();return;}
