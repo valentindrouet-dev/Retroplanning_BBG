@@ -599,8 +599,8 @@ function range(games,C){var s=addD(today,-14),e=today;games.forEach(function(g){
 function pos(d,R){var p=(d-R[0])/(R[1]-R[0])*100;return Math.max(0,Math.min(100,p));}
 function lines(R,g){var h="";var a=pos(parse(CNY[0]),R),b=pos(parse(CNY[1]),R);if(b>a)h+='<span class="cny" style="left:'+a+'%;width:'+(b-a)+'%"></span>';
   var m=new Date(R[0].getFullYear(),R[0].getMonth()+1,1);while(m<R[1]){h+='<span class="vl" style="left:'+pos(m,R)+'%"></span>';m=new Date(m.getFullYear(),m.getMonth()+1,1);}
-  h+='<span class="vl today" style="left:'+pos(today,R)+'%"></span>';var c=parse(CANNES);if(c>R[0]&&c<R[1])h+='<span class="vl cannes" style="left:'+pos(c,R)+'%"></span>';
-  if(g)h+='<span class="vl fab" style="left:'+pos(parse(g.fab),R)+'%"></span>';return h;}
+  h+='<span class="vl today" style="left:'+pos(today,R)+'%"></span>';
+  return h;}
 function monthsHead(R){var h='<div class="months" aria-hidden="true">';var m=new Date(R[0].getFullYear(),R[0].getMonth()+1,1);
   while(m<R[1]){var p=pos(m,R);if(p<97)h+='<span data-p="'+p+'">'+MOIS[m.getMonth()]+(m.getMonth()===0?" "+String(m.getFullYear()).slice(2):"")+'</span>';m=new Date(m.getFullYear(),m.getMonth()+1,1);}
   var t=pos(today,R);h+='<span class="mk" data-p="'+t+'">auj.</span>';return h+'</div>';}
@@ -619,7 +619,7 @@ function bar(t,r,R,g){var a=pos(r.ps,R),b=pos(r.pe,R);if(b<=a)b=a+.6;var e=etat(
 
 function row(g,t,r,R,com){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=etat(t,r),ic=inCom(g,t);
  var meta='<span class="meta">'+(com?'<select class="gsel" data-action="gmove" '+A+' title="Changer le jeu concerné par cette ligne" aria-label="Jeu concerné">'+allG().map(function(x){return '<option value="'+x.id+'"'+(x.id===g.id?" selected":"")+'>'+esc(x.id==="bbg"?"BBG global":x.name)+'</option>';}).join("")+'</select>':"")+'<button class="req'+(t.o?" opt":"")+'" data-action="req" '+A+' title="Basculer obligatoire / facultatif">'+(t.o?"Facultatif":"Obligatoire")+'</button>'+whoBtn(g,t)+
-  (g.id==="bbg"?"":t.anc!=="fab"?'<button class="tag" data-action="deps" '+A+'>→ '+(t.anc==="cannes"?"Cannes":"sortie")+'</button>':'<button class="txt" data-action="deps" '+A+' title="Catégorie et échéance">→ fabrication</button>')+
+  
   '<button class="disttog'+(t.dist?"":" off")+'" data-action="dist" '+A+' aria-pressed="'+!!t.dist+'" title="'+(t.dist?"Retirer l’étiquette Distribution":"Ajouter l’étiquette Distribution")+'">'+(t.dist?"Distribution":"+ Distribution")+'</button>'+(com||g.id==="bbg"?"":'<button class="comtog'+(ic?"":" off")+'" data-action="comtog" '+A+' aria-pressed="'+ic+'" title="'+(ic?"Retirer de l’onglet Communication":"Ajouter à l’onglet Communication")+'">'+(ic?"Com":"+ Com")+'</button>')+'</span>';
  return '<div class="row'+(s===2?" done":"")+(t.o?" isopt":"")+(ui.sel.indexOf(g.id+"|"+t.id)>=0?" sel":"")+'" style="--g:var(--'+g.color+')" data-track="'+(com?ctOf(g,t):t.t)+'">'+
  '<div class="gripcell"><span class="grip" draggable="true" data-action="grip" data-kind="'+(com?"comtask":"task")+'" '+A+' title="Glisser pour déplacer la tâche, y compris vers une autre catégorie. Maj+clic ou Cmd/Ctrl+clic pour sélectionner plusieurs lignes" aria-hidden="true">⠿</span></div>'+
@@ -627,7 +627,7 @@ function row(g,t,r,R,com){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=e
  '<div class="namecell"><span class="tname-in" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="name" '+A+' aria-label="Nom de la tâche">'+esc(t.n)+'</span>'+meta+
  (com&&g.id!=="bbg"?'<button class="del" data-action="comrm" '+A+' aria-label="Retirer '+esc(t.n)+' de l’onglet Communication" title="Retirer de l’onglet Communication (la tâche reste dans '+esc(g.name)+')">×</button>':'<button class="del" data-action="del" '+A+' aria-label="Supprimer la tâche '+esc(t.n)+'" title="Supprimer">×</button>')+'<button class="dup" data-action="dup" '+A+' aria-label="Dupliquer la tâche '+esc(t.n)+'" title="Dupliquer">⧉</button></div>'+
  '<div class="c-dur">'+(t.u==="p"?'<span class="msk" aria-hidden="true">◆</span>':'<input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence">')+'<button class="unit" data-action="unit" '+A+' title="Changer l’unité : semaines, jours, ou jour J (événement ponctuel, un seul jour)">'+(t.u==="j"?"j":t.u==="p"?"jour J":"sem.")+'</button></div>'+
- '<div class="c-due'+(r.over>0&&t.s!==2?" over":"")+'"'+(r.over>0&&t.s!==2?' title="Finit '+r.over+' j après la date limite ('+fs(addD(r.pe,-r.over))+')"':'')+'><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span>'+(t.u==="p"?'<span class="to">ponctuel</span>':'<span class="to">→ '+fs(r.pe)+'</span>')+''+''+'</div>'+
+ '<div class="c-due"><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span>'+(t.u==="p"?'<span class="to">ponctuel</span>':'<span class="to">→ '+fs(r.pe)+'</span>')+''+''+'</div>'+
  '<div class="c-etat"><span class="pill '+e.k+'">'+e.x+'</span></div>'+
  (com?'<div class="c-cost"><input class="num cost" type="number" min="0" step="10" value="'+(t.cost||"")+'" placeholder="0" data-action="cost" '+A+' aria-label="Coût de '+esc(t.n)+' en euros">€</div>':"")+
  '<div class="tl" aria-hidden="true">'+lines(R,g.id==="bbg"?null:g)+bar(t,r,R,g)+'</div></div>';}
@@ -642,7 +642,7 @@ function gameView(g,c){var R=range([g],{[g.id]:c});
   ts.forEach(function(t){h+=row(g,t,c.rows[t.id],R);});
   h+='<div class="row addrow" data-track="'+tr[0]+'"><div></div><button data-action="add" data-g="'+g.id+'" data-t="'+tr[0]+'">+ Ajouter une tâche</button></div>';});
  h+='<div class="trrow-add"><button data-action="tradd">+ Ajouter une catégorie</button></div>';
- h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Plan au plus tard, rempli selon l\'avancement</span><span><i class="lg-today"></i>Aujourd\'hui</span><span><i class="lg-fab"></i>Envoi en fabrication</span><span><i class="lg-cny"></i>Nouvel An chinois</span></div>';
+ h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Plan au plus tard, rempli selon l\'avancement</span><span><i class="lg-today"></i>Aujourd\'hui</span><span><i class="lg-cny"></i>Nouvel An chinois</span></div>';
  h+='<p class="foot">Chaque barre est la période où la tâche doit se faire pour tenir l\'envoi en fabrication. Elle ne bouge que si tu changes sa durée ou sa date : modifier une tâche ne déplace jamais les autres. Quand tu avances une tâche, seule sa barre se remplit. L\'état compare ton avancement à la ligne d\'aujourd\'hui. La carte du jeu, en haut, donne la projection globale à partir du travail restant.</p>'+
  '<p class="foot"><button class="linkbtn'+(ui.confirmReset?" warn":"")+'" data-action="reset" data-g="'+g.id+'">'+(ui.confirmReset?"Confirmer : remettre "+esc(g.name)+" à la proposition initiale":"Remettre "+esc(g.name)+" à la proposition initiale")+'</button></p>';
  return h;}
@@ -673,7 +673,7 @@ function comView(C){
   c.items.forEach(function(i){h+=row(i.g,i.t,i.r,R,true);});
   h+='<div class="row addrow" data-track="'+c.k+'"><button class="addplus" data-action="comadd" data-k="'+c.k+'" title="Nouvelle ligne dans « '+esc(c.n)+' »" aria-label="Nouvelle ligne dans '+esc(c.n)+'">+</button><button data-action="compick" data-k="'+c.k+'">+ Ajouter une ligne existante</button></div>';});
  h+='<div class="trrow-add"><button data-action="ctradd">+ Ajouter une catégorie</button></div>';
- h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Période de la tâche, remplie selon l’avancement</span><span><i class="lg-today"></i>Aujourd’hui</span><span><i class="lg-fab"></i>Envoi en fabrication du jeu</span></div>';
+ h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Période de la tâche, remplie selon l’avancement</span><span><i class="lg-today"></i>Aujourd’hui</span></div>';
  return h;}
 
 /* ordre affiché des lignes de l'onglet Communication */
@@ -731,7 +731,7 @@ function overview(C){var R=range(state.games,C);
    var a=null,b=null,tot=0,dn=0,lt=false;ts.forEach(function(t){var r=c.rows[t.id];if(!a||r.ps<a)a=r.ps;if(!b||r.pe>b)b=r.pe;tot+=t.d;dn+=t.d*(t.p||0)/100;if(etat(t,r).k==="late")lt=true;});
    var pa=pos(a,R),pb=pos(b,R);h+='<div class="band"><span class="plan'+(lt?" islate":"")+'" style="left:'+pa+'%;width:'+Math.max(.6,pb-pa)+'%"><i style="width:'+(tot?Math.round(dn/tot*100):0)+'%"></i></span><em style="'+(pb>80?'left:calc('+pa+'% - 4px);transform:translateX(-100%)':'left:calc('+pb+'% + 4px)')+'">'+tr[1]+'</em></div>';});
   h+='</div></div>';});
- h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Plan par catégorie, rempli selon l\'avancement (tâches obligatoires)</span><span><i class="lg-today"></i>Aujourd\'hui</span><span><i class="lg-fab"></i>Envoi en fabrication</span><span><i class="lg-cny"></i>Nouvel An chinois</span></div>';
+ h+='</div></div><div class="legend"><span><i class="lg-plan"></i>Plan par catégorie, rempli selon l\'avancement (tâches obligatoires)</span><span><i class="lg-today"></i>Aujourd\'hui</span><span><i class="lg-cny"></i>Nouvel An chinois</span></div>';
  var list=[];state.games.forEach(function(g){g.tasks.forEach(function(t){if(t.s===2)return;var r=C[g.id].rows[t.id];if(diff(r.ps,today)<=30)list.push({g:g,t:t,r:r});});});
  list.sort(function(x,y){return x.r.ps-y.r.ps;});
  h+='<div class="ov"><div class="panel"><h2>Dans les 30 prochains jours</h2><p class="hint">Tâches dont le plan démarre avant le '+fmt(addD(today,30))+'.</p><ul class="next">'+(list.length?list.map(function(x){var s=x.t.s,e=etat(x.t,x.r);return '<li style="--g:var(--'+x.g.color+')"><button class="st" data-s="'+s+'" style="--pp:'+(x.t.p||0)+'%" data-action="cycle" data-g="'+x.g.id+'" data-id="'+x.t.id+'" aria-label="'+esc(x.t.n)+' : '+(s===1?x.t.p+' % fait':'à faire')+'. Ajouter 25 %" title="Clic : +25 %"></button><div><span class="gtag">'+esc(x.g.name)+(x.t.o?", facultatif":"")+'</span><span class="tn">'+esc(x.t.n)+'</span><span class="meta">'+fmt(x.r.ps)+' → '+fmt(x.r.pe)+(s===1?", "+x.t.p+" % fait":"")+'</span></div><span class="pill '+e.k+'">'+e.x+'</span></li>';}).join(""):'<li><div></div><div>Rien à lancer sur les 30 prochains jours.</div></li>')+'</ul></div>';
@@ -769,9 +769,9 @@ function exportPdf(g,c,shared){return (shared?Promise.resolve(null):loadJsPDF())
   doc.setLineWidth(.1);doc.setDrawColor("#d7ded9");
   var m=new Date(R[0].getFullYear(),R[0].getMonth()+1,1);while(m<R[1]){var x=tx(m);doc.line(x,y0,x,y1);m=new Date(m.getFullYear(),m.getMonth()+1,1);}
   doc.setLineWidth(.35);doc.setDrawColor("#333");var t=tx(today);doc.line(t,y0,t,y1);
-  doc.setDrawColor("#B8352A");var f=tx(parse(g.fab));doc.line(f,y0,f,y1);}
+  }
  function foot(){doc.setFontSize(6.5);doc.setTextColor("#888");
-  doc.text(pdfTxt("Barre = période où la tâche doit se faire pour tenir l'envoi en fabrication ; remplissage = avancement. Trait noir : aujourd'hui. Trait rouge : envoi en fabrication. Bande rosée : fermeture Nouvel An chinois."),M,H-6);
+  doc.text(pdfTxt("Barre = période où la tâche doit se faire pour tenir l'envoi en fabrication ; remplissage = avancement. Trait noir : aujourd'hui. Bande rosée : fermeture Nouvel An chinois."),M,H-6);
   doc.text("Big Budi Games",W-M,H-6,{align:"right"});}
  head();
  var rows=[];
@@ -794,7 +794,6 @@ function exportPdf(g,c,shared){return (shared?Promise.resolve(null):loadJsPDF())
   doc.text(cut(doc,t.n,col.d-col.n-3),col.n,y+3.3);
   var sub=[];if(t.dist)sub.push("DISTRIBUTION");if(t.o)sub.push("facultatif");
   var pw=(t.w||[]).map(pOf).filter(Boolean).map(function(x){return x.ic||initials(x.n);});if(pw.length)sub.push(pw.join(" "));
-  if(t.anc!=="fab")sub.push("échéance : "+(t.anc==="cannes"?"Cannes":"sortie"));
   doc.setFont("helvetica","normal");doc.setFontSize(6.3);doc.setTextColor("#777");
   if(sub.length)doc.text(cut(doc,sub.join("  ·  "),col.d-col.n-3),col.n,y+6.2);
   doc.setFontSize(7.5);doc.setTextColor("#333");
