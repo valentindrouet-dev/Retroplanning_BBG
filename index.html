@@ -564,7 +564,7 @@ function newKey(p){return p+Date.now().toString(36);}
 function allG(){return state.games.concat([state.bbg,state.dist]);}
 /* Sections hors jeux : BBG global et Distribution */
 function isX(g){return g.id==="bbg"||g.id==="dist";}
-function gShort(g){return gShort(g);}
+function gShort(g){return g.id==="bbg"?"BBG":g.name;}
 /* Une ligne est dans l'onglet Communication si elle est de catégorie Communication (sauf retrait manuel) ou ajoutée à la main. */
 function inCom(g,t){return isX(g)||!!t.ci||(t.t==="com"&&!t.cx);}
 function comOut(t){t.ci=false;if(t.t==="com")t.cx=true;}
@@ -707,9 +707,9 @@ function moveGame(o,gid){var from=o.g,t=o.t,to=gOf(gid);if(!to||to===from)return
  if(to.tasks.some(function(x){return x.id===t.id;}))t.id=to.id.charAt(0)+Date.now().toString(36);
  if(!isX(to)&&t.t!=="com")t.ci=true;t.cx=false;var cur=ctOf(from,t),TK=state.com.tracks.map(function(x){return x[0];});t.ct=cur==="c_"+from.id&&TK.indexOf("c_"+to.id)>=0?"c_"+to.id:cur;
  to.tasks.push(t);var j=ks.indexOf(oldK);if(j>=0)ks[j]=to.id+"|"+t.id;state.com.order=ks;ui.sel=[];changed();}
-function dupTask(o){var g=o.g,t=o.t,i=g.tasks.indexOf(t);if(i<0)return;var c=JSON.parse(JSON.stringify(t));c.id=g.id.charAt(0)+Date.now().toString(36);c.n=t.n+" (copie)";c.s=0;c.p=0;g.tasks.splice(i+1,0,c);
+function dupTask(o){var g=o.g,t=o.t,i=g.tasks.indexOf(t);if(i<0)return;var c=JSON.parse(JSON.stringify(t));c.id=g.id.charAt(0)+Date.now().toString(36);c.s=0;c.p=0;g.tasks.splice(i+1,0,c);
  var me=g.id+"|"+t.id,ks=comKeys().map(function(x){return x.k;});if(!ks.length)ks=state.com.order.slice();var j=ks.indexOf(me);if(j>=0){ks.splice(j+1,0,g.id+"|"+c.id);state.com.order=ks;}
- changed();focusName(c.id);}
+ changed();}
 function openComPick(gid,ck){var gs=state.games.filter(function(g){return !gid||g.id===gid;});
  dlg.innerHTML='<form method="dialog"><h2>Ajouter à l’onglet Communication</h2><p class="dlgsub">Coche les tâches à suivre aussi dans l’onglet Communication. Elles restent dans leur jeu.</p><div class="deplist">'+gs.map(function(g){var ts=g.tasks.filter(function(t){return !inCom(g,t);});if(!ts.length)return '<p>Toutes les tâches de '+esc(g.name)+' sont déjà dans l’onglet Communication.</p>';
   return '<fieldset><legend>'+esc(g.name)+'</legend>'+state.tracks.map(function(tr){return ts.filter(function(t){return t.t===tr[0];}).map(function(t){return '<label><input type="checkbox" value="'+g.id+'|'+t.id+'"> '+esc(t.n)+' <small style="color:var(--muted)">· '+esc(tr[1])+'</small></label>';}).join("");}).join("")+'</fieldset>';}).join("")+
@@ -855,11 +855,11 @@ function pdfCom(doc,first){var W=297,H=210,M=8,y=0,page=0,C={};allG().forEach(fu
   doc.setDrawColor("#dde3df");doc.setLineWidth(.1);doc.line(M,y+6,190,y+6);y+=6;}
  md.G.forEach(function(g){var tot=0;g.tasks.forEach(function(t){if(inCom(g,t))tot+=+t.cost||0;});var bud=+state.com.budget[g.id]||0;T+=tot;B+=bud;brow(g.name,tot,bud);});brow("Total communication",T,B,true);
  if(md.all.length){need(14+5.5*(md.all.length+1));y+=6;doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor("#111");doc.text("Mois par mois",M,y);y+=5;
-  var cx=[60,85,110,135,165,195];doc.setFontSize(6.5);doc.setFont("helvetica","normal");doc.setTextColor("#777");doc.text("MOIS",X.n,y);
-  md.G.forEach(function(g,k){doc.text(pdfTxt((gShort(g)).toUpperCase()),cx[k],y,{align:"right"});});doc.text("TOTAL",cx[4],y,{align:"right"});doc.text("CUMUL",cx[5],y,{align:"right"});y+=2;
+  var nG=md.G.length,cx=md.G.map(function(g,k){return 62+k*24;});cx.push(62+nG*24+8,62+nG*24+38);doc.setFontSize(6.5);doc.setFont("helvetica","normal");doc.setTextColor("#777");doc.text("MOIS",X.n,y);
+  md.G.forEach(function(g,k){doc.text(pdfTxt((gShort(g)).toUpperCase()),cx[k],y,{align:"right"});});doc.text("TOTAL",cx[nG],y,{align:"right"});doc.text("CUMUL",cx[nG+1],y,{align:"right"});y+=2;
   var cum=0;md.all.forEach(function(k){need(5.5);var x=md.M[k]||{tot:0,by:{}},pk=k.split("-").map(Number);cum+=x.tot;doc.setFontSize(7.5);doc.setTextColor("#111");doc.setFont("helvetica","normal");doc.text(pdfTxt(MOIS[pk[1]-1]+" "+pk[0]),X.n,y+4);
-   md.G.forEach(function(g,j){var v=x.by[g.id]||0;doc.text(pdfTxt(v?eur(v):"-"),cx[j],y+4,{align:"right"});});doc.setFont("helvetica","bold");doc.text(pdfTxt(x.tot?eur(x.tot):"-"),cx[4],y+4,{align:"right"});
-   doc.setFont("helvetica","normal");doc.setTextColor(md.B&&cum>md.B?"#B8352A":"#111");doc.text(pdfTxt(eur(cum)),cx[5],y+4,{align:"right"});doc.setDrawColor("#dde3df");doc.line(M,y+5.5,200,y+5.5);y+=5.5;});
+   md.G.forEach(function(g,j){var v=x.by[g.id]||0;doc.text(pdfTxt(v?eur(v):"-"),cx[j],y+4,{align:"right"});});doc.setFont("helvetica","bold");doc.text(pdfTxt(x.tot?eur(x.tot):"-"),cx[nG],y+4,{align:"right"});
+   doc.setFont("helvetica","normal");doc.setTextColor(md.B&&cum>md.B?"#B8352A":"#111");doc.text(pdfTxt(eur(cum)),cx[nG+1],y+4,{align:"right"});doc.setDrawColor("#dde3df");doc.line(M,y+5.5,cx[nG+1]+4,y+5.5);y+=5.5;});
   doc.setFontSize(6.5);doc.setTextColor("#888");doc.text(pdfTxt("Chaque coût est compté dans le mois de début de sa tâche."),M,y+4);}
  foot();return doc;}
 function exportCom(){return loadJsPDF().then(function(JS){var doc=new JS({orientation:"landscape",unit:"mm",format:"a4"});pdfCom(doc,true);return saveFile("Retroplanning-Communication-"+iso(today)+".pdf",doc.output("blob"));});}
