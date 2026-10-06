@@ -696,6 +696,7 @@ if(!state.cat2)state.cat2=[["Réseaux","#3A78BC"],["Campagne $","#C9912A"],["Fes
 if(!state.dist){state.dist={id:"dist",name:"Distribution",color:"dist",fab:"2099-12-31",sortie:"2099-12-31",tasks:[]};
  if(!state.com.tracks.some(function(x){return x[0]==="c_dist";}))state.com.tracks.push(["c_dist","Distribution"]);
  state.bbg.tasks=state.bbg.tasks.filter(function(t){if(t.dist){delete t.dist;if(t.ct==="c_bbg"||!t.ct)t.ct="c_dist";state.dist.tasks.push(t);return false;}return true;});}
+allG().forEach(function(g){g.tasks.forEach(function(t){if(t.rs&&t.vtx&&t.vs===undefined)t.vs=true;});});
 }
 ensureState();
 /* Catégorie d'une ligne dans l'onglet Communication (indépendante de sa catégorie dans le jeu) */
@@ -713,7 +714,7 @@ function netBtn(t,A){var sel=(t.net||[]).map(netOf).filter(Boolean);return '<but
 function passN(t){var f=ui.fn||[];if(!f.length)return true;var n=t.net||[];return f.some(function(k){return k==="_none"?!n.length:n.indexOf(k)>=0;});}
 /* Pas d'avancement au clic : 1 réseau coché = une part (3 réseaux → 33 %), sinon 25 % */
 /* Case Photos / Vidéo-Réel avec son champ de description à droite */
-function medRow(t,A,k,lab,ph){var on=!!t[k];return '<div class="medrow"><label class="phchk'+(on?" on":"")+'"><input type="checkbox" data-action="med" data-k="'+k+'" '+A+(on?" checked":"")+'> '+lab+'</label>'+(on?'<div class="desc-in" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" tabindex="0" data-action="'+k+'x" '+A+' data-ph="'+ph+'" aria-label="'+ph+'">'+esc(t[k+"x"]||"")+'</div>':"")+'</div>';}
+function medRow(t,A,k,lab,ph,fx){fx=fx||k+"x";var on=!!t[k];return '<div class="medrow"><label class="phchk'+(on?" on":"")+'"><input type="checkbox" data-action="med" data-k="'+k+'" data-fx="'+fx+'" '+A+(on?" checked":"")+'> '+lab+'</label>'+(on?'<div class="desc-in" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" tabindex="0" data-action="'+fx+'" '+A+' data-ph="'+ph+'" aria-label="'+ph+'">'+esc(t[fx]||"")+'</div>':"")+'</div>';}
 function pStep(t){var n=t.rs?(t.net||[]).length:0;return n?100/n:25;}
 function c2Of(id){for(var i=0;i<state.cat2.length;i++)if(state.cat2[i].id===id)return state.cat2[i];return null;}
 function c2Sel(t,A){var c=c2Of(t.c2);return '<select class="c2sel'+(c?"":" none")+'" data-action="c2set" '+A+(c?' style="--c2:'+c.c+'"':"")+' title="Catégorie secondaire" aria-label="Catégorie secondaire"><option value="">'+(c?"— aucune":"+ catégorie")+'</option>'+state.cat2.map(function(x){return '<option value="'+x.id+'"'+(x.id===t.c2?" selected":"")+'>'+esc(x.n)+'</option>';}).join("")+'</select>';}
@@ -805,7 +806,7 @@ function row(g,t,r,R,com){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=e
  '<button class="st" data-s="'+s+'" style="--pp:'+(t.p||0)+'%" data-action="cycle" '+A+' aria-label="'+esc(t.n)+' : '+(s===2?"fait":s===1?Math.round(t.p)+" % fait":"à faire")+'. Ajouter '+Math.round(pStep(t))+' %" title="Clic : +'+Math.round(pStep(t))+' %'+(t.rs&&(t.net||[]).length?" (1 réseau sur "+t.net.length+")":"")+'"></button>'+
  '<div class="namecell"><span class="tname-in" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="name" '+A+' aria-label="Nom de la tâche">'+esc(t.n)+'</span>'+(com==="rs"?'<div class="desc-in" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" tabindex="0" data-action="desc" '+A+' data-ph="Description…" aria-label="Description">'+esc(t.desc||"")+'</div>':"")+meta+
  (com==="com"&&!isX(g)?'<button class="del" data-action="comrm" '+A+' aria-label="Retirer '+esc(t.n)+' de l’onglet Communication" title="Retirer de l’onglet Communication (la tâche reste dans '+esc(g.name)+')">×</button>':'<button class="del" data-action="del" '+A+' aria-label="Supprimer la tâche '+esc(t.n)+'" title="Supprimer">×</button>')+'<button class="dup" data-action="dup" '+A+' aria-label="Dupliquer la tâche '+esc(t.n)+'" title="Dupliquer">⧉</button></div>'+
- (com==="rs"?'<div class="c-vis"><div class="desc-in" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" tabindex="0" data-action="vtx" '+A+' data-ph="Visuels utilisés…" aria-label="Visuels utilisés">'+esc(t.vtx||"")+'</div>'+medRow(t,A,"ph","Photos","Photos à prendre…")+medRow(t,A,"vd","Vidéo / Réel","Vidéo ou réel à tourner…")+'</div>':'<div class="c-dur">'+(t.u==="p"?'<span class="msk" aria-hidden="true">◆</span>':'<input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence">')+'<button class="unit" data-action="unit" '+A+' title="Changer l’unité : semaines, jours, ou jour J (événement ponctuel, un seul jour)">'+(t.u==="j"?"j":t.u==="p"?"jour J":"sem.")+'</button></div>')+
+ (com==="rs"?'<div class="c-vis">'+medRow(t,A,"vs","Visuels","Visuels utilisés…","vtx")+medRow(t,A,"ph","Photos","Photos à prendre…")+medRow(t,A,"vd","Vidéo / Réel","Vidéo ou réel à tourner…")+'</div>':'<div class="c-dur">'+(t.u==="p"?'<span class="msk" aria-hidden="true">◆</span>':'<input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence">')+'<button class="unit" data-action="unit" '+A+' title="Changer l’unité : semaines, jours, ou jour J (événement ponctuel, un seul jour)">'+(t.u==="j"?"j":t.u==="p"?"jour J":"sem.")+'</button></div>')+
  '<div class="c-due"><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span>'+(t.u==="p"?'<span class="to">ponctuel</span>':'<span class="to">→ '+fs(r.pe)+'</span>')+''+''+'</div>'+
  '<div class="c-etat"><span class="pill '+e.k+'">'+e.x+'</span></div>'+
  (com==="com"?'<div class="c-cost"><input class="num cost" type="number" min="0" step="10" value="'+(t.cost||"")+'" placeholder="0" data-action="cost" '+A+' aria-label="Coût de '+esc(t.n)+' en euros">€</div>':"")+
@@ -1080,7 +1081,7 @@ function pdfCom(doc,first,k){k=k||"com";var RS=k==="rs",L=LS(k);var W=297,H=210,
    function wrap(txt,w,sz,bold){doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(sz);return doc.splitTextToSize(pdfTxt(String(txt||"").replace(/\r/g,"")),w);}
    var tl=wrap(t.n,X.nw,7.8,t.s!==2),dl=RS&&t.desc?wrap(t.desc,X.nw,6.8,false):[],
     gl=wrap(RS?((t.net||[]).map(function(k){var n=netOf(k);return n?n[1]:"";}).join(", ")||"-"):gShort(i.g)+(c2Of(t.c2)?" · "+c2Of(t.c2).n:""),X.gw,7,false),
-    vt=RS?[t.vtx||"",t.ph?"Photos"+(t.phx?" : "+t.phx:""):"",t.vd?"Vidéo / Réel"+(t.vdx?" : "+t.vdx:""):""].filter(Boolean).join("\n"):"",vl=vt?wrap(vt,X.vw,6.8,false):[];
+    vt=RS?[t.vs?"Visuels"+(t.vtx?" : "+t.vtx:""):"",t.ph?"Photos"+(t.phx?" : "+t.phx:""):"",t.vd?"Vidéo / Réel"+(t.vdx?" : "+t.vdx:""):""].filter(Boolean).join("\n"):"",vl=vt?wrap(vt,X.vw,6.8,false):[];
    var nl=Math.max(tl.length+dl.length,gl.length,vl.length,1),rh=Math.max(6,2.4+nl*LH+1);
    need(rh);var yy=y+4.2;
    doc.setFont("helvetica",t.s===2?"normal":"bold");doc.setFontSize(7.8);doc.setTextColor(t.s===2?"#777":"#111");doc.text(tl,X.n,yy,{lineHeightFactor:1.15});
@@ -1242,7 +1243,7 @@ app.addEventListener("change",function(e){var el=e.target,a=el.dataset.action,o,
  else if(a==="dur"){v=parseFloat(el.value);if(isNaN(v))v=0;if(o.t.u==="j")v=v/7;o.t.d=Math.max(0,Math.min(52,Math.round(v*1000)/1000));}
  else if(a==="pct"){v=parseInt(el.value,10);o.t.p=isNaN(v)?0:Math.max(0,Math.min(95,v));}
  else if(a==="anc"){o.t.anc=el.value;}
- else if(a==="med"){var mk=el.dataset.k;if(el.checked)o.t[mk]=true;else delete o.t[mk];var phid=o.t.id;setTimeout(function(){changed();if(el.checked){var f=app.querySelector('[data-action="'+mk+'x"][data-id="'+phid+'"]');if(f)f.focus();}},0);return;}
+ else if(a==="med"){var mk=el.dataset.k;if(el.checked)o.t[mk]=true;else delete o.t[mk];var phid=o.t.id;setTimeout(function(){changed();if(el.checked){var f=app.querySelector('[data-action="'+(el.dataset.fx||mk+"x")+'"][data-id="'+phid+'"]');if(f)f.focus();}},0);return;}
  else if(a==="cost"){v=parseFloat(el.value);o.t.cost=isNaN(v)?0:Math.max(0,Math.round(v*100)/100);}
  else if(a==="track"){o.t.t=el.value;}
  setTimeout(changed,0);});
