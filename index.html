@@ -416,7 +416,10 @@ dialog.wide{max-width:980px}
 .c2item .c2n{font-size:12px;color:var(--muted)}
 @media print{.fbar{display:none!important}}
 
-.rsgrid .row{grid-template-columns:24px 38px minmax(260px,1.6fr) 100px 238px 112px 112px minmax(320px,2fr)}
+.rsgrid .row{grid-template-columns:24px 38px minmax(260px,1.5fr) minmax(200px,1.1fr) 200px 112px minmax(300px,1.6fr)}
+.rsgrid .c-vis{justify-content:flex-start;align-self:stretch;padding:8px 10px!important;border-left:1px solid var(--line)}
+.rsgrid .c-vis .desc-in{margin:0;width:100%}
+.rsgrid .head .c-vis{border-left:0;padding-left:10px!important}
 .c-vis{display:flex;align-items:center;justify-content:center;padding:4px 6px!important}
 .visth{all:unset;cursor:pointer;display:block;border-radius:5px;overflow:hidden;line-height:0;border:1px solid var(--line)}
 .visth img{width:84px;height:56px;object-fit:cover;display:block;background:var(--soft)}
@@ -432,7 +435,7 @@ dialog.wide{max-width:980px}
 .desc-in:focus{border-color:var(--focus);background:var(--surface);color:var(--ink)}
 .visbig{margin:0 0 12px;text-align:center}
 .visbig img{max-width:100%;max-height:55vh;border-radius:8px;border:1px solid var(--line)}
-@media (max-width:760px){.row>.c-vis,.head>.c-vis{display:none}.rsgrid .row{grid-template-columns:22px 34px 1fr 96px}}
+@media (max-width:760px){.row>.c-vis,.head>.c-vis{display:none}.rsgrid .row{grid-template-columns:22px 34px 1fr 96px}.rsgrid .row>.c-due,.rsgrid .head>.c-due{display:none}}
 @media print{.desc-in{font-size:8.5px}.visth img{width:48px;height:32px}}
 
 .tors{font:inherit;font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:4px;padding:0 6px;cursor:pointer;flex:none;background:var(--surface);color:var(--muted)}
@@ -605,7 +608,9 @@ if(!state.bbg)state.bbg={id:"bbg",name:"BBG (global)",color:"bbg",fab:"2099-12-3
 if(!state.com)state.com={budget:{}};if(!state.com.budget)state.com.budget={};
 if(!state.com.tracks)state.com.tracks=[["c_torna","TornaDice"],["c_edit","EDIT"],["c_camino","Camino"],["c_bbg","BBG (global)"]];
 if(!state.com.order)state.com.order=[];
-if(!state.rs)state.rs={tracks:[["r_torna","TornaDice"],["r_edit","EDIT"],["r_camino","Camino"],["r_bbg","BBG (global)"],["r_dist","Distribution"]],order:[],budget:{}};
+if(!state.rs)state.rs={order:[],budget:{}};
+/* Réseaux : liste unique, pas de catégories de regroupement */
+state.rs.tracks=[["r_all","Publications"]];
 if(!state.cat2)state.cat2=[["Réseaux","#3A78BC"],["Campagne $","#C9912A"],["Festival","#B8352A"],["Newsletter","#1F8A8A"],["Design","#7B4FB0"],["Fabrication","#5B6860"],["Sortie","#3F7D4E"]].map(function(x,i){return {id:"k"+i,n:x[0],c:x[1]};});
 if(!state.dist){state.dist={id:"dist",name:"Distribution",color:"dist",fab:"2099-12-31",sortie:"2099-12-31",tasks:[]};
  if(!state.com.tracks.some(function(x){return x[0]==="c_dist";}))state.com.tracks.push(["c_dist","Distribution"]);
@@ -702,7 +707,7 @@ function bar(t,r,R,g){var a=pos(r.ps,R),b=pos(r.pe,R);if(b<=a)b=a+.6;var e=etat(
   return '<span class="plan'+(t.u==="p"?" ms":"")+(t.s===2?" isdone":"")+(e.k==="late"&&!t.o?" islate":"")+(t.o?" isopt":"")+'" data-g="'+g.id+'" data-id="'+t.id+'" data-ps="'+iso(r.ps)+'" data-dd="'+r.dur+'" style="left:'+a+'%;width:'+(b-a)+'%" title="'+esc(t.n)+' : '+fmt(r.ps)+' → '+fmt(r.pe)+', '+(t.p||0)+' % fait. Glisse la barre pour la déplacer, ses bords pour changer la durée."><i style="width:'+(t.p||0)+'%"></i><span class="hl"></span><span class="hr"></span></span>';}
 
 function row(g,t,r,R,com){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=etat(t,r),ic=inCom(g,t);
- var meta='<span class="meta">'+(com?'<select class="gsel" data-action="gmove" '+A+' title="Changer le jeu concerné par cette ligne" aria-label="Jeu concerné">'+allG().map(function(x){return '<option value="'+x.id+'"'+(x.id===g.id?" selected":"")+'>'+esc(x.id==="bbg"?"BBG global":x.name)+'</option>';}).join("")+'</select>':"")+c2Sel(t,A)+(com==="com"?'<button class="tors'+(rsCopy(t)?" done":"")+'" data-action="tors" '+A+' title="'+(rsCopy(t)?"Déjà copiée dans Réseaux (clic : en refaire une copie)":"Copier cette ligne et ses données dans l’onglet Réseaux")+'">'+(rsCopy(t)?"✓ Réseaux":"→ Réseaux")+'</button>':"")+'<button class="req'+(t.o?" opt":"")+'" data-action="req" '+A+' title="'+(t.o?"Facultatif":"Obligatoire")+' (clic pour basculer)" aria-label="'+(t.o?"Facultatif":"Obligatoire")+', basculer">'+(t.o?"○":"●")+'</button>'+whoBtn(g,t)+
+ var meta='<span class="meta">'+(com?'<select class="gsel" data-action="gmove" '+A+' title="Changer le jeu concerné par cette ligne" aria-label="Jeu concerné">'+allG().map(function(x){return '<option value="'+x.id+'"'+(x.id===g.id?" selected":"")+'>'+esc(x.id==="bbg"?"BBG global":x.name)+'</option>';}).join("")+'</select>':"")+c2Sel(t,A)+(com==="com"?'<button class="tors'+(rsCopy(t)?" done":"")+'" data-action="tors" '+A+' title="'+(rsCopy(t)?"Déjà copiée dans Réseaux (clic : en refaire une copie)":"Copier cette ligne dans l’onglet Réseaux (titre, jeu, catégorie 2, date, collaborateurs)")+'">'+(rsCopy(t)?"✓ Réseaux":"→ Réseaux")+'</button>':"")+'<button class="req'+(t.o?" opt":"")+'" data-action="req" '+A+' title="'+(t.o?"Facultatif":"Obligatoire")+' (clic pour basculer)" aria-label="'+(t.o?"Facultatif":"Obligatoire")+', basculer">'+(t.o?"○":"●")+'</button>'+whoBtn(g,t)+
   
   (t.dist?'<button class="disttog" data-action="dist" '+A+' title="Retirer l’étiquette Distribution">Distribution</button>':"")+(com||isX(g)?"":'<button class="comtog'+(ic?"":" off")+'" data-action="comtog" '+A+' aria-pressed="'+ic+'" title="'+(ic?"Retirer de l’onglet Communication":"Ajouter à l’onglet Communication")+'">'+(ic?"Com":"+ Com")+'</button>')+'</span>';
  return '<div class="row'+(s===2?" done":"")+(t.o?" isopt":"")+(ui.sel.indexOf(g.id+"|"+t.id)>=0?" sel":"")+'" style="--g:var(--'+g.color+')" data-track="'+(com?ctOf(g,t):t.t)+'">'+
@@ -710,10 +715,10 @@ function row(g,t,r,R,com){var s=t.s,A='data-g="'+g.id+'" data-id="'+t.id+'"',e=e
  '<button class="st" data-s="'+s+'" style="--pp:'+(t.p||0)+'%" data-action="cycle" '+A+' aria-label="'+esc(t.n)+' : '+(s===2?"fait":s===1?t.p+" % fait":"à faire")+'. Ajouter 25 %" title="Clic : +25 %"></button>'+
  '<div class="namecell"><span class="tname-in" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="name" '+A+' aria-label="Nom de la tâche">'+esc(t.n)+'</span>'+(com==="rs"?'<div class="desc-in" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" tabindex="0" data-action="desc" '+A+' data-ph="Description…" aria-label="Description">'+esc(t.desc||"")+'</div>':"")+meta+
  (com==="com"&&!isX(g)?'<button class="del" data-action="comrm" '+A+' aria-label="Retirer '+esc(t.n)+' de l’onglet Communication" title="Retirer de l’onglet Communication (la tâche reste dans '+esc(g.name)+')">×</button>':'<button class="del" data-action="del" '+A+' aria-label="Supprimer la tâche '+esc(t.n)+'" title="Supprimer">×</button>')+'<button class="dup" data-action="dup" '+A+' aria-label="Dupliquer la tâche '+esc(t.n)+'" title="Dupliquer">⧉</button></div>'+
- (com==="rs"?'<div class="c-vis" '+A+'>'+(t.vis?'<button class="visth" data-action="vis" '+A+' title="Voir ou changer le visuel"><img src="'+esc(t.vis)+'" alt="" loading="lazy"></button>':'<button class="visadd" data-action="vis" '+A+' title="Ajouter un visuel (ou glisse une image ici)">+ visuel</button>')+'</div>':'<div class="c-dur">'+(t.u==="p"?'<span class="msk" aria-hidden="true">◆</span>':'<input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence">')+'<button class="unit" data-action="unit" '+A+' title="Changer l’unité : semaines, jours, ou jour J (événement ponctuel, un seul jour)">'+(t.u==="j"?"j":t.u==="p"?"jour J":"sem.")+'</button></div>')+
+ (com==="rs"?'<div class="c-vis"><div class="desc-in" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" tabindex="0" data-action="vtx" '+A+' data-ph="Visuels utilisés…" aria-label="Visuels utilisés">'+esc(t.vtx||"")+'</div></div>':'<div class="c-dur">'+(t.u==="p"?'<span class="msk" aria-hidden="true">◆</span>':'<input class="num" type="number" min="0" max="'+(t.u==="j"?364:52)+'" step="'+(t.u==="j"?1:0.5)+'" value="'+(t.u==="j"?Math.round(t.d*7):t.d)+'" data-action="dur" '+A+' aria-label="Durée" title="'+r.dur+' jours calendaires avec la prudence">')+'<button class="unit" data-action="unit" '+A+' title="Changer l’unité : semaines, jours, ou jour J (événement ponctuel, un seul jour)">'+(t.u==="j"?"j":t.u==="p"?"jour J":"sem.")+'</button></div>')+
  '<div class="c-due"><input type="date" class="dt" value="'+iso(r.ps)+'" data-action="start" '+A+' aria-label="Date de début"><span class="pronly">'+fs(r.ps)+'</span>'+(t.u==="p"?'<span class="to">ponctuel</span>':'<span class="to">→ '+fs(r.pe)+'</span>')+''+''+'</div>'+
  '<div class="c-etat"><span class="pill '+e.k+'">'+e.x+'</span></div>'+
- (com?'<div class="c-cost"><input class="num cost" type="number" min="0" step="10" value="'+(t.cost||"")+'" placeholder="0" data-action="cost" '+A+' aria-label="Coût de '+esc(t.n)+' en euros">€</div>':"")+
+ (com==="com"?'<div class="c-cost"><input class="num cost" type="number" min="0" step="10" value="'+(t.cost||"")+'" placeholder="0" data-action="cost" '+A+' aria-label="Coût de '+esc(t.n)+' en euros">€</div>':"")+
  '<div class="tl" aria-hidden="true">'+lines(R,isX(g)?null:g)+bar(t,r,R,g)+'</div></div>';}
 
 function gameView(g,c){var R=range([g],{[g.id]:c});
@@ -749,16 +754,16 @@ function comView(C,k){k=k||"com";var L=LS(k),RS=k==="rs";
   (bud?'<span class="bar'+(rest<0?" over":"")+'"><i style="width:'+Math.min(100,pc)+'%"></i></span><span class="rest '+(rest<0?"late":"ok")+'">'+(rest<0?"Dépassement de "+eur(-rest):"Reste "+eur(rest)+" ("+pc+" % engagé)")+'</span>':'<span class="rest muted">Saisis un budget pour suivre l’écart</span>')+'</div>';}
  var T=0,B=0;secs.forEach(function(x){T+=x.tot;B+=x.bud;});
  var cats=comCats(C,k),nAll=0,nShow=0;cats.forEach(function(c){nAll+=c.items.length;c.items=c.items.filter(function(i){return pass1(i.g)&&pass2(i.t);});nShow+=c.items.length;c.tot=c.items.reduce(function(x,i){return x+(+i.t.cost||0);},0);});
- var h=RS?'<div class="toolbar"><p class="comhint">Les publications réseaux de tous les jeux, de BBG et de la Distribution. Chaque ligne est ponctuelle (un jour), avec un titre, une description et un visuel (clique sur la case Visuel, ou glisse une image dessus). Catégories, filtres, coûts et sélection multiple fonctionnent comme dans l’onglet Communication. Ces lignes n’apparaissent que dans cet onglet.</p><span class="spacer"></span><button class="btn prbtn" data-action="pdfcom" data-l="rs">Exporter en PDF</button></div>':'<div class="toolbar"><p class="comhint">Les tâches de catégorie Communication des 3 jeux arrivent ici automatiquement. Ajoute d’autres lignes à la main avec « + Com » dans l’onglet d’un jeu, ou avec le bouton ci-contre. La croix retire une ligne d’ici sans la supprimer de son jeu. Nom, dates, avancement et coût sont partagés avec l’onglet du jeu. Les catégories de cet onglet sont propres à lui : renomme-les, glisse-les (⠿), et glisse les lignes de l’une à l’autre.</p><span class="spacer"></span><button class="btn prbtn" data-action="pdfcom" data-l="com">Exporter en PDF</button><button class="btn on" data-action="compick">+ Ajouter des lignes existantes</button></div>';
- h+='<div class="costs">'+secs.map(function(x){return tile(x.g.name,x.g.color,x.tot,x.bud,x.g.id);}).join("")+totTile(T,B)+'</div>';
+ var h=RS?'<div class="toolbar"><p class="comhint">Les publications réseaux de tous les jeux, de BBG et de la Distribution. Chaque ligne est ponctuelle (un jour), avec un titre, une description et les visuels utilisés. Catégorie 1 et 2, filtres, glisser-déposer et sélection multiple fonctionnent comme dans l’onglet Communication. Ces lignes n’apparaissent que dans cet onglet.</p><span class="spacer"></span><button class="btn prbtn" data-action="pdfcom" data-l="rs">Exporter en PDF</button></div>':'<div class="toolbar"><p class="comhint">Les tâches de catégorie Communication des 3 jeux arrivent ici automatiquement. Ajoute d’autres lignes à la main avec « + Com » dans l’onglet d’un jeu, ou avec le bouton ci-contre. La croix retire une ligne d’ici sans la supprimer de son jeu. Nom, dates, avancement et coût sont partagés avec l’onglet du jeu. Les catégories de cet onglet sont propres à lui : renomme-les, glisse-les (⠿), et glisse les lignes de l’une à l’autre.</p><span class="spacer"></span><button class="btn prbtn" data-action="pdfcom" data-l="com">Exporter en PDF</button><button class="btn on" data-action="compick">+ Ajouter des lignes existantes</button></div>';
+ if(!RS)h+='<div class="costs">'+secs.map(function(x){return tile(x.g.name,x.g.color,x.tot,x.bud,x.g.id);}).join("")+totTile(T,B)+'</div>';
  h+=fbar(true,nShow,nAll);
- h+='<div class="scroller"><div class="grid comgrid'+(RS?" rsgrid":"")+'" role="table" data-r0="'+iso(R[0])+'" data-rd="'+diff(R[1],R[0])+'"><div class="row head"><div></div><div></div><div>'+(RS?"Publication":"Tâche")+'</div>'+(RS?'<div class="c-vis">Visuel</div>':'<div class="c-dur">Durée</div>')+'<div class="c-due">'+(RS?"Date":"Début → fin")+'</div><div class="c-etat">État</div><div class="c-cost">Coût</div>'+monthsHead(R)+'</div>';
+ h+='<div class="scroller"><div class="grid comgrid'+(RS?" rsgrid":"")+'" role="table" data-r0="'+iso(R[0])+'" data-rd="'+diff(R[1],R[0])+'"><div class="row head"><div></div><div></div><div>'+(RS?"Publication":"Tâche")+'</div>'+(RS?'<div class="c-vis">Visuel</div>':'<div class="c-dur">Durée</div>')+'<div class="c-due">'+(RS?"Date":"Début → fin")+'</div><div class="c-etat">État</div>'+(RS?"":'<div class="c-cost">Coût</div>')+monthsHead(R)+'</div>';
  var fOn=(ui.f1||[]).length||(ui.f2||[]).length;
- cats.forEach(function(c){if(fOn&&!ui.showEmpty&&!c.items.length)return;var dn=c.items.filter(function(i){return i.t.s===2;}).length;
-  h+='<div class="row trackrow" data-track="'+c.k+'"><div class="tname"><span class="grip" draggable="true" data-action="grip" data-kind="comtrack" data-k="'+c.k+'" title="Glisser pour déplacer la catégorie" aria-hidden="true">⠿</span><span class="trname" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="ctrname" data-k="'+c.k+'">'+esc(c.n)+'</span><span class="tcount">'+dn+' / '+c.items.length+' faites · <b>'+eur(c.tot)+'</b></span>'+(c.items.length||cats.length<2?"":'<button class="trdel" data-action="ctrdel" data-k="'+c.k+'" title="Supprimer cette catégorie vide" aria-label="Supprimer la catégorie '+esc(c.n)+'">×</button>')+'</div><div class="tl">'+lines(R,null)+'</div></div>';
+ cats.forEach(function(c){if(!RS&&fOn&&!ui.showEmpty&&!c.items.length)return;var dn=c.items.filter(function(i){return i.t.s===2;}).length;
+  if(!RS)h+='<div class="row trackrow" data-track="'+c.k+'"><div class="tname"><span class="grip" draggable="true" data-action="grip" data-kind="comtrack" data-k="'+c.k+'" title="Glisser pour déplacer la catégorie" aria-hidden="true">⠿</span><span class="trname" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-action="ctrname" data-k="'+c.k+'">'+esc(c.n)+'</span><span class="tcount">'+dn+' / '+c.items.length+' faites · <b>'+eur(c.tot)+'</b></span>'+(c.items.length||cats.length<2?"":'<button class="trdel" data-action="ctrdel" data-k="'+c.k+'" title="Supprimer cette catégorie vide" aria-label="Supprimer la catégorie '+esc(c.n)+'">×</button>')+'</div><div class="tl">'+lines(R,null)+'</div></div>';
   c.items.forEach(function(i){h+=row(i.g,i.t,i.r,R,k);});
-  h+='<div class="row addrow" data-track="'+c.k+'"><button class="addplus" data-action="comadd" data-k="'+c.k+'" title="Nouvelle ligne dans « '+esc(c.n)+' »" aria-label="Nouvelle ligne dans '+esc(c.n)+'">+</button>'+(RS?"":'<button data-action="compick" data-k="'+c.k+'">+ Ajouter une ligne existante</button>')+'</div>';});
- h+='<div class="trrow-add"><button data-action="ctradd">+ Ajouter une catégorie</button></div>';
+  h+='<div class="row addrow" data-track="'+c.k+'"><button class="addplus" data-action="comadd" data-k="'+c.k+'" title="'+(RS?"Nouvelle publication":"Nouvelle ligne dans « "+esc(c.n)+" »")+'" aria-label="'+(RS?"Nouvelle publication":"Nouvelle ligne dans "+esc(c.n))+'">+</button>'+(RS?"":'<button data-action="compick" data-k="'+c.k+'">+ Ajouter une ligne existante</button>')+'</div>';});
+ if(!RS)h+='<div class="trrow-add"><button data-action="ctradd">+ Ajouter une catégorie</button></div>';
  h+='</div></div><div class="legend"><span><i class="lg-plan"></i>'+(RS?"Date de publication (losange)":"Période de la tâche, remplie selon l’avancement")+'</span><span><i class="lg-today"></i>Aujourd’hui</span></div>';
  return h;}
 
@@ -768,8 +773,8 @@ function focusName(id){var ni=app.querySelector('[data-action="name"][data-id="'
 /* Nouvelle ligne dans une catégorie Communication : jeu déduit de la catégorie (ou de ses lignes), sinon BBG global */
 /* Date de début d'une nouvelle ligne : celle de la ligne juste au-dessus (sinon aujourd'hui) */
 function prevDate(el){var r=el&&el.closest(".row");while(r&&(r=r.previousElementSibling)){var d=r.querySelector("input.dt");if(d&&d.value)return d.value;}return iso(today);}
-function addComTask(ck,start){var k=curK(),L=LS(k),pf=k==="rs"?"r_":"c_";var gid=ck.indexOf(pf)===0&&gOf(ck.slice(2))?ck.slice(2):null;
- if(!gid){var n={};allG().forEach(function(g){g.tasks.forEach(function(t){if(inList(g,t,k)&&ctOf(g,t,k)===ck)n[g.id]=(n[g.id]||0)+1;});});var best=0;Object.keys(n).forEach(function(k){if(n[k]>best){best=n[k];gid=k;}});}
+function addComTask(ck,start){var k=curK(),L=LS(k),pf=k==="rs"?"r_":"c_";var gid=k==="rs"?"bbg":ck.indexOf(pf)===0&&gOf(ck.slice(2))?ck.slice(2):null;
+ if(!gid&&k!=="rs"){var n={};allG().forEach(function(g){g.tasks.forEach(function(t){if(inList(g,t,k)&&ctOf(g,t,k)===ck)n[g.id]=(n[g.id]||0)+1;});});var best=0;Object.keys(n).forEach(function(k){if(n[k]>best){best=n[k];gid=k;}});}
  var cg=gOf(gid)||state.bbg,cid=cg.id.charAt(0)+Date.now().toString(36),tk=state.tracks.some(function(x){return x[0]==="com";})?"com":state.tracks[0][0];
  var nt={id:cid,t:isX(cg)?"com":tk,n:"Nouvelle tâche",d:1,a:[],s:0,p:0,anc:"fab",o:false,w:[],start:start||iso(today)};nt[CTF(k)]=ck;if(k==="rs"){nt.rs=true;nt.u="p";nt.d=0;nt.n="Nouvelle publication";}else if(!isX(cg)&&tk!=="com")nt.ci=true;cg.tasks.push(nt);
  var nkey=cg.id+"|"+cid,ks=comKeys().filter(function(x){return x.k!==nkey;}),pos=ks.length;ks.forEach(function(x,i){if(x.tr===ck)pos=i+1;});var ord=ks.map(function(x){return x.k;});ord.splice(pos,0,cg.id+"|"+cid);L.order=ord;
@@ -782,24 +787,11 @@ function moveGame(o,gid,batch){var k=curK(),L=LS(k),f=CTF(k),pf=k==="rs"?"r_":"c
  if(!isX(to)&&t.t!=="com")t.ci=true;t.cx=false;var cur=ctOf(from,t,k),TK=L.tracks.map(function(x){return x[0];});t[f]=cur===pf+from.id&&TK.indexOf(pf+to.id)>=0?pf+to.id:cur;
  to.tasks.push(t);var j=ks.indexOf(oldK);if(j>=0)ks[j]=to.id+"|"+t.id;L.order=ks;if(batch)return;ui.sel=[];changed();}
 function selTasks(){var out=[];ui.sel.forEach(function(k){var kk=k.split("|"),g=gOf(kk[0]),t=g&&g.tasks.filter(function(x){return x.id===kk[1];})[0];if(t)out.push({g:g,t:t});});return out;}
-/* Visuels : image importée (réduite à 640 px, enregistrée dans la page) ou lien */
-function shrinkImg(f){return new Promise(function(res,rej){var rd=new FileReader();rd.onerror=rej;rd.onload=function(){var im=new Image();im.onerror=rej;im.onload=function(){var M=640,w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,M/Math.max(w,h)),cv=document.createElement("canvas");cv.width=Math.round(w*k);cv.height=Math.round(h*k);var cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL("image/jpeg",0.8));};im.src=rd.result;};rd.readAsDataURL(f);});}
-function setVis(t,f){if(!f||!/^image\//.test(f.type))return;shrinkImg(f).then(function(d){t.vis=d;changed();});}
-function openVis(o){var t=o.t,isData=t.vis&&t.vis.indexOf("data:")===0;
- dlg.innerHTML='<form method="dialog"><h2>Visuel · '+esc(t.n)+'</h2>'+(t.vis?'<div class="visbig"><img src="'+esc(t.vis)+'" alt="">'+(isData?'':'<p class="mnote"><a href="'+esc(t.vis)+'" target="_blank" rel="noopener">Ouvrir le lien</a></p>')+'</div>':'<p class="dlgsub">Aucun visuel pour l’instant.</p>')+
- '<label class="field dlgf">Image depuis ton ordinateur<input type="file" accept="image/*" name="vf"></label><label class="field dlgf">ou lien vers l’image (URL)<input type="url" name="vu" placeholder="https://…" value="'+(t.vis&&!isData?esc(t.vis):"")+'"></label><p class="mnote">Les images importées sont réduites à 640 px et enregistrées dans la page (et dans la sauvegarde JSON). Pour beaucoup de visuels, préfère un lien.</p>'+
- '<div class="dlgbar">'+(t.vis?'<button class="btn warn" value="del" style="margin-right:auto">Supprimer le visuel</button>':'')+'<button class="btn" value="cancel">Annuler</button><button class="btn on" value="ok">Valider</button></div></form>';
- dlg.onclose=function(){var v=dlg.returnValue;if(v==="del"){delete t.vis;changed();return;}if(v!=="ok")return;var f=dlg.querySelector('[name="vf"]').files[0],u=dlg.querySelector('[name="vu"]').value.trim();
-  if(f)setVis(t,f);else if(u){t.vis=u;changed();}};
- dlg.returnValue="";dlg.showModal();}
-app.addEventListener("dragover",function(e){if(drag)return;var c=e.target.closest&&e.target.closest(".c-vis");if(!c||!e.dataTransfer||[].indexOf.call(e.dataTransfer.types||[],"Files")<0)return;e.preventDefault();e.dataTransfer.dropEffect="copy";c.classList.add("dropfile");});
-app.addEventListener("dragleave",function(e){var c=e.target.closest&&e.target.closest(".c-vis");if(c)c.classList.remove("dropfile");});
-app.addEventListener("drop",function(e){if(drag)return;var c=e.target.closest&&e.target.closest(".c-vis");if(!c||!e.dataTransfer||!e.dataTransfer.files||!e.dataTransfer.files.length)return;e.preventDefault();c.classList.remove("dropfile");var o=findT(c);if(o.t)setVis(o.t,e.dataTransfer.files[0]);});
 /* Copie d'une ligne Communication vers Réseaux (la ligne d'origine reste en place) */
 function taskById(id){var r=null;allG().forEach(function(g){g.tasks.forEach(function(t){if(t.id===id)r={g:g,t:t};});});return r;}
 function rsCopy(t){return t.rsc&&taskById(t.rsc)?taskById(t.rsc):null;}
 function toRs(o,ps){var g=o.g,t=o.t,c=JSON.parse(JSON.stringify(t));
- c.id=g.id.charAt(0)+Date.now().toString(36);c.rs=true;c.u="p";c.d=0;c.t="com";c.start=iso(ps);delete c.ct;delete c.ci;delete c.cx;delete c.rsc;
+ c.id=g.id.charAt(0)+Date.now().toString(36);c.rs=true;c.u="p";c.d=0;c.t="com";c.start=iso(ps);delete c.ct;delete c.ci;delete c.cx;delete c.rsc;delete c.cost;
  c.rt=ctOf(g,c,"rs");g.tasks.push(c);t.rsc=c.id;
  var C={},keys=[];allG().forEach(function(x){C[x.id]=compute(x);});comCats(C,"rs").forEach(function(cat){cat.items.forEach(function(i){if(i.t!==c)keys.push({k:i.key,tr:cat.k});});});
  var pos=keys.length;keys.forEach(function(x,i){if(x.tr===c.rt)pos=i+1;});var ord=keys.map(function(x){return x.k;});ord.splice(pos,0,g.id+"|"+c.id);state.rs.order=ord;changed();}
@@ -928,21 +920,22 @@ function saveFile(name,blob){if(window.claude&&window.claude.use)return window.c
 function pdfCom(doc,first,k){k=k||"com";var RS=k==="rs",L=LS(k);var W=297,H=210,M=8,y=0,page=0,C={};allG().forEach(function(g){C[g.id]=compute(g);});
  var cats=comCats(C,k),X={n:M+2,g:150,d:178,e:222,c:W-M-2};
  function head(){page++;if(page>1||!first)doc.addPage();doc.setTextColor("#111");doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text(RS?"Réseaux":"Communication",M,14);
-  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor("#555");doc.text(pdfTxt("Au "+fmt(today)+(RS?"  ·  publications réseaux, coûts et budgets":"  ·  tâches, coûts et budgets de communication (3 jeux + BBG)")),M,19);
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor("#555");doc.text(pdfTxt("Au "+fmt(today)+(RS?"  ·  publications réseaux":"  ·  tâches, coûts et budgets de communication (3 jeux + BBG)")),M,19);
   doc.setDrawColor("#111");doc.setLineWidth(.4);doc.line(M,21,W-M,21);y=27;}
  function foot(){doc.setFontSize(6.5);doc.setTextColor("#888");doc.text("Big Budi Games",W-M,H-6,{align:"right"});}
  function need(h){if(y+h>H-12){foot();head();}}
- function colsHead(){doc.setFontSize(6.5);doc.setTextColor("#777");doc.setFont("helvetica","normal");doc.text("TÂCHE",X.n,y);doc.text("JEU",X.g,y);doc.text("DATES",X.d,y);doc.text("ÉTAT",X.e,y);doc.text("COÛT",X.c,y,{align:"right"});y+=2;}
+ function colsHead(){doc.setFontSize(6.5);doc.setTextColor("#777");doc.setFont("helvetica","normal");doc.text("TÂCHE",X.n,y);doc.text("JEU",X.g,y);doc.text("DATES",X.d,y);doc.text("ÉTAT",X.e,y);if(RS)doc.text("VISUELS",X.e+28,y);else doc.text("COÛT",X.c,y,{align:"right"});y+=2;}
  head();colsHead();
- cats.forEach(function(c){need(14);doc.setFillColor("#eef1ee");doc.rect(M,y,W-2*M,6,"F");doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor("#222");doc.text(pdfTxt(c.n),M+2,y+4);
-  doc.text(pdfTxt(eur(c.tot)),X.c,y+4,{align:"right"});y+=6;
+ cats.forEach(function(c){if(!RS){need(14);doc.setFillColor("#eef1ee");doc.rect(M,y,W-2*M,6,"F");doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor("#222");doc.text(pdfTxt(c.n),M+2,y+4);
+  doc.text(pdfTxt(eur(c.tot)),X.c,y+4,{align:"right"});y+=6;}
   c.items.forEach(function(i){need(6.5);var t=i.t,r=i.r,e=etat(t,r);
-   doc.setFont("helvetica",t.s===2?"normal":"bold");doc.setFontSize(7.8);doc.setTextColor(t.s===2?"#777":"#111");doc.text(cut(doc,t.n+(RS&&t.desc?"  —  "+t.desc.replace(/\s+/g," "):""),X.g-X.n-4),X.n,y+4.2);
+   doc.setFont("helvetica",t.s===2?"normal":"bold");doc.setFontSize(7.8);doc.setTextColor(t.s===2?"#777":"#111");doc.text(cut(doc,t.n+(RS&&t.desc?"  —  "+t.desc.replace(/\s+/g," "):""),X.g-X.n-4),X.n,y+4.2);if(RS&&t.vtx){doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor("#777");doc.text(cut(doc,"Visuels : "+t.vtx.replace(/\s+/g," "),X.c-X.e-30),X.e+28,y+4.2);}
    doc.setFont("helvetica","normal");doc.setFontSize(7.2);doc.setTextColor("#555");doc.text(cut(doc,gShort(i.g)+(c2Of(t.c2)?" · "+c2Of(t.c2).n:""),X.d-X.g-2),X.g,y+4.2);
    doc.text(pdfTxt(t.u==="p"?fs(r.ps)+" (jour J)":fs(r.ps)+" - "+fs(r.pe)),X.d,y+4.2);
    doc.setTextColor(e.k==="late"?"#B8352A":e.k==="tight"?"#9a6508":e.k==="ok"||e.k==="done"?"#2E7A4C":"#777");doc.text(pdfTxt(e.x),X.e,y+4.2);
-   doc.setTextColor("#111");doc.text(pdfTxt(+t.cost?eur(t.cost):"-"),X.c,y+4.2,{align:"right"});
+   doc.setTextColor("#111");if(!RS)doc.text(pdfTxt(+t.cost?eur(t.cost):"-"),X.c,y+4.2,{align:"right"});
    doc.setDrawColor("#dde3df");doc.setLineWidth(.1);doc.line(M,y+6,W-M,y+6);y+=6;});});
+ if(RS){foot();return doc;}
  var md=monthData(k),T=0,B=0;
  need(14+6*(md.G.length+1));y+=6;doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor("#111");doc.text("Budgets",M,y);y+=5;
  doc.setFontSize(6.5);doc.setFont("helvetica","normal");doc.setTextColor("#777");doc.text("SECTION",X.n,y);doc.text("COÛTS",120,y,{align:"right"});doc.text("BUDGET",150,y,{align:"right"});doc.text("ÉCART",185,y,{align:"right"});y+=2;
@@ -1043,7 +1036,6 @@ app.addEventListener("click",function(e){var el=e.target.closest("[data-action]"
  if(a==="compick"){openComPick(el.dataset.g,el.dataset.k);return;}
  if(a==="months"){openMonths(el.dataset.l||"com");return;}
  if(a==="tors"){o=findT(el);if(!o.t)return;var rr=compute(o.g).rows[o.t.id];toRs(o,rr?rr.ps:today);return;}
- if(a==="vis"){o=findT(el);if(o.t)openVis(o);return;}
  if(a==="dist"){o=findT(el);if(!o.t)return;o.t.dist=!o.t.dist;changed();return;}
  if(a==="comadd"){addComTask(el.dataset.k,prevDate(el));return;}
  if(a==="dup"){o=findT(el);if(o.t)dupTask(o);return;}
@@ -1082,7 +1074,7 @@ app.addEventListener("change",function(e){var el=e.target,a=el.dataset.action,o,
  else if(a==="cost"){v=parseFloat(el.value);o.t.cost=isNaN(v)?0:Math.max(0,Math.round(v*100)/100);}
  else if(a==="track"){o.t.t=el.value;}
  setTimeout(changed,0);});
-app.addEventListener("focusout",function(e){var el=e.target;if(el.dataset&&el.dataset.action==="trname"){var k=el.dataset.k,nv=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";state.tracks.forEach(function(tr){if(tr[0]===k&&tr[1]!==nv){tr[1]=nv;setTimeout(changed,0);}});return;}if(el.dataset&&el.dataset.action==="desc"){var od=findT(el);if(!od.t)return;var dv=el.innerText.replace(/\u00a0/g," ").replace(/\n{3,}/g,"\n\n").trim();if(dv!==(od.t.desc||"")){if(dv)od.t.desc=dv;else delete od.t.desc;setTimeout(changed,0);}return;}if(el.dataset&&el.dataset.action==="c2name"){var c2=c2Of(el.dataset.id),c2v=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";if(c2&&c2.n!==c2v){c2.n=c2v;setTimeout(changed,0);}return;}if(el.dataset&&el.dataset.action==="ctrname"){var ck=el.dataset.k,cv=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";LS(curK()).tracks.forEach(function(tr){if(tr[0]===ck&&tr[1]!==cv){tr[1]=cv;setTimeout(changed,0);}});return;}if(el.dataset&&el.dataset.action==="pname"){var pp=pOf(el.dataset.id);if(pp){var nv=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";if(nv!==pp.n){pp.n=nv;setTimeout(changed,0);}}return;}if(el.dataset&&el.dataset.action==="name"){var o=findT(el);if(!o.t)return;var v=el.textContent.replace(/\s+/g," ").trim()||"Sans titre";if(v!==o.t.n){o.t.n=v;setTimeout(changed,0);}}});
+app.addEventListener("focusout",function(e){var el=e.target;if(el.dataset&&el.dataset.action==="trname"){var k=el.dataset.k,nv=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";state.tracks.forEach(function(tr){if(tr[0]===k&&tr[1]!==nv){tr[1]=nv;setTimeout(changed,0);}});return;}if(el.dataset&&(el.dataset.action==="desc"||el.dataset.action==="vtx")){var od=findT(el),fd=el.dataset.action;if(!od.t)return;var dv=el.innerText.replace(/\u00a0/g," ").replace(/\n{3,}/g,"\n\n").trim();if(dv!==(od.t[fd]||"")){if(dv)od.t[fd]=dv;else delete od.t[fd];setTimeout(changed,0);}return;}if(el.dataset&&el.dataset.action==="c2name"){var c2=c2Of(el.dataset.id),c2v=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";if(c2&&c2.n!==c2v){c2.n=c2v;setTimeout(changed,0);}return;}if(el.dataset&&el.dataset.action==="ctrname"){var ck=el.dataset.k,cv=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";LS(curK()).tracks.forEach(function(tr){if(tr[0]===ck&&tr[1]!==cv){tr[1]=cv;setTimeout(changed,0);}});return;}if(el.dataset&&el.dataset.action==="pname"){var pp=pOf(el.dataset.id);if(pp){var nv=el.textContent.replace(/\s+/g," ").trim()||"Sans nom";if(nv!==pp.n){pp.n=nv;setTimeout(changed,0);}}return;}if(el.dataset&&el.dataset.action==="name"){var o=findT(el);if(!o.t)return;var v=el.textContent.replace(/\s+/g," ").trim()||"Sans titre";if(v!==o.t.n){o.t.n=v;setTimeout(changed,0);}}});
 app.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.classList&&(e.target.classList.contains("tname-in")||e.target.classList.contains("trname")||e.target.classList.contains("c2name")||e.target.classList.contains("pic")||e.target.classList.contains("num")||e.target.classList.contains("pin"))){e.preventDefault();e.target.blur();}});
 app.addEventListener("input",function(e){if(e.target.dataset.action==="prud"){var out=e.target.parentNode.querySelector("output");if(out)out.textContent="×"+num(parseFloat(e.target.value).toFixed(2));}});
 
