@@ -764,7 +764,7 @@ function slackTxt(sl){return sl<0?"−"+(-sl)+" j":"+"+sl+" j";}
 
 var app=document.getElementById("app");
 function header(){return '<header class="top"><div><h1>Rétroplanning</h1><p class="sub">Big Budi Games, du '+fmt(today)+" à l'envoi en fabrication</p></div>"+
- '<div class="controls"><button class="btn evbtn" data-action="evmenu" aria-haspopup="true" aria-expanded="'+!!evPop+'">Dates importantes ▾</button><span class="chip" id="chip" role="status"></span><div class="io"><button class="btn" data-action="pdfall" title="Un seul PDF : les 3 jeux et l’onglet Communication">PDF complet</button><button class="btn" data-action="jsonexp" title="Télécharge toutes les données dans un fichier, pour pouvoir les réimporter">Sauvegarde JSON</button><button class="btn" data-action="jsonimp" title="Recharge les données depuis une sauvegarde JSON">Importer JSON</button></div></div></header>';}
+ '<div class="controls"><button class="btn evbtn" data-action="evmenu" aria-haspopup="true" aria-expanded="'+!!evPop+'">Dates importantes ▾</button><span class="chip" id="chip" role="status"></span><div class="io"><button class="btn" data-action="pdfall" title="Un seul PDF : les 3 jeux et l’onglet Communication">PDF complet</button>'+(ui.sel.length?'<button class="btn on" data-action="pdfsel" title="PDF avec seulement les lignes sélectionnées de cet onglet">PDF sélectionnés ('+ui.sel.length+')</button>':"")+'<button class="btn" data-action="jsonexp" title="Télécharge toutes les données dans un fichier, pour pouvoir les réimporter">Sauvegarde JSON</button><button class="btn" data-action="jsonimp" title="Recharge les données depuis une sauvegarde JSON">Importer JSON</button></div></div></header>';}
 
 function summary(C){return '<div class="cards">'+state.games.map(function(g){var c=C[g.id],k=cls(c.marge);
  return '<button class="gcard" style="--g:var(--'+g.color+')" data-action="tab" data-tab="'+g.id+'" aria-current="'+(ui.tab===g.id)+'"><span class="gname">'+esc(g.name)+'</span><span class="big">'+(c.daysLeft>=0?"J-"+c.daysLeft:"J+"+(-c.daysLeft))+'</span><span class="lbl">avant l\'envoi en fabrication, le '+fmt(c.fab)+'</span>'+
@@ -999,12 +999,12 @@ function loadJsPDF(){if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve(
 function pdfTxt(s){return String(s).replace(/[\u202f\u00a0]/g," ").replace(/◆/g,"").replace(/→/g,"-").replace(/⠿/g,"").replace(/’/g,"'");}
 function cut(doc,s,w){s=pdfTxt(s);if(doc.getTextWidth(s)<=w)return s;var t=s;while(t.length>1&&doc.getTextWidth(t+"…")>w)t=t.slice(0,-1);return t+"…";}
 var GCOL={camino:"#3F7D4E",edit:"#B8860B",torna:"#3A78BC"};
-function exportPdf(g,c,shared){return (shared?Promise.resolve(null):loadJsPDF()).then(function(JS){
+function exportPdf(g,c,shared,only){return (shared?Promise.resolve(null):loadJsPDF()).then(function(JS){
  var R=range([g],(function(){var o={};o[g.id]=c;return o;})()),doc=shared?shared.doc:new JS({orientation:"landscape",unit:"mm",format:"a4"});
  var W=297,H=210,M=8,col={n:M+5,d:96,dt:112,e:146,t0:170,t1:W-M},TW=col.t1-col.t0,GC=GCOL[g.color]||"#3A78BC",y=0,page=0;
  function tx(d){var p=(d-R[0])/(R[1]-R[0]);p=Math.max(0,Math.min(1,p));return col.t0+p*TW;}
  function head(){page++;if(page>1||(shared&&!shared.first))doc.addPage();
-  doc.setTextColor("#111");doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text(pdfTxt(g.name),M,14);
+  doc.setTextColor("#111");doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text(pdfTxt(g.name+(only?" · sélection":"")),M,14);
   doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor("#555");
   doc.text(pdfTxt("Rétroplanning au "+fmt(today)+"  ·  envoi en fabrication le "+fmt(c.fab)+"  ·  sortie le "+fmt(parse(g.sortie))+"  ·  "+(c.marge>=0?"marge de "+c.marge+" jours":"retard projeté de "+(-c.marge)+" jours")+"  ·  prudence x"+num(state.prudence.toFixed(2))),M,19);
   doc.setDrawColor("#111");doc.setLineWidth(.4);doc.line(M,21,W-M,21);
@@ -1026,7 +1026,7 @@ function exportPdf(g,c,shared){return (shared?Promise.resolve(null):loadJsPDF())
   doc.text("Big Budi Games",W-M,H-6,{align:"right"});}
  head();
  var rows=[];
- state.tracks.forEach(function(tr){var ts=g.tasks.filter(function(t){return t.t===tr[0]&&!t.rs;});if(!ts.length)return;
+ state.tracks.forEach(function(tr){var ts=g.tasks.filter(function(t){return t.t===tr[0]&&!t.rs&&(!only||only.indexOf(t.id)>=0);});if(!ts.length)return;
   rows.push({h:1,n:tr[1],dn:ts.filter(function(t){return t.s===2;}).length,tot:ts.length});
   ts.forEach(function(t){rows.push({t:t,r:c.rows[t.id]});});});
  var yTop=y;
@@ -1060,7 +1060,7 @@ function exportPdf(g,c,shared){return (shared?Promise.resolve(null):loadJsPDF())
   y+=rh;});
  foot();
  if(shared)return doc;
- return saveFile("Retroplanning-"+g.name.replace(/[^\w\-]+/g,"")+"-"+iso(today)+".pdf",doc.output("blob"));});}
+ return saveFile("Retroplanning-"+g.name.replace(/[^\w\-]+/g,"")+(only?"-selection":"")+"-"+iso(today)+".pdf",doc.output("blob"));});}
 
 /* Téléchargement : outil de Claude.ai s'il existe, sinon lien de téléchargement classique (GitHub Pages, fichier local) */
 function dlLink(name,blob){var a=document.createElement("a"),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove();},1500);}
@@ -1068,9 +1068,9 @@ function saveFile(name,blob){if(window.claude&&window.claude.use)return window.c
  dlLink(name,blob);return Promise.resolve();}
 
 /* PDF de l'onglet Communication : lignes par catégorie, coûts, budgets, mois par mois */
-function pdfCom(doc,first,k){k=k||"com";var RS=k==="rs",L=LS(k);var W=297,H=210,M=8,y=0,page=0,C={};allG().forEach(function(g){C[g.id]=compute(g);});
- var cats=comCats(C,k),X=RS?{n:M+2,nw:98,g:110,gw:36,d:150,e:180,v:206,vw:W-M-206}:{n:M+2,nw:136,g:150,gw:26,d:178,e:222,c:W-M-2};
- function head(){page++;if(page>1||!first)doc.addPage();doc.setTextColor("#111");doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text(RS?"Réseaux":"Communication",M,14);
+function pdfCom(doc,first,k,only){k=k||"com";var RS=k==="rs",L=LS(k);var W=297,H=210,M=8,y=0,page=0,C={};allG().forEach(function(g){C[g.id]=compute(g);});
+ var cats=comCats(C,k);if(only)cats.forEach(function(c){c.items=c.items.filter(function(i){return only.indexOf(i.key)>=0;});c.tot=c.items.reduce(function(x,i){return x+(+i.t.cost||0);},0);});cats=cats.filter(function(c){return !only||c.items.length;});var X=RS?{n:M+2,nw:98,g:110,gw:36,d:150,e:180,v:206,vw:W-M-206}:{n:M+2,nw:136,g:150,gw:26,d:178,e:222,c:W-M-2};
+ function head(){page++;if(page>1||!first)doc.addPage();doc.setTextColor("#111");doc.setFont("helvetica","bold");doc.setFontSize(15);doc.text((RS?"Réseaux":"Communication")+(only?" · sélection":""),M,14);
   doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor("#555");doc.text(pdfTxt("Au "+fmt(today)+(RS?"  ·  publications réseaux":"  ·  tâches, coûts et budgets de communication (3 jeux + BBG)")),M,19);
   doc.setDrawColor("#111");doc.setLineWidth(.4);doc.line(M,21,W-M,21);y=27;}
  function foot(){doc.setFontSize(6.5);doc.setTextColor("#888");doc.text("Big Budi Games",W-M,H-6,{align:"right"});}
@@ -1095,7 +1095,7 @@ function pdfCom(doc,first,k){k=k||"com";var RS=k==="rs",L=LS(k);var W=297,H=210,
    if(vl.length){doc.setFontSize(6.8);doc.setTextColor("#7a4a12");doc.text(vl,X.v,yy,{lineHeightFactor:1.15});}
    doc.setTextColor("#111");if(!RS){doc.setFontSize(7.2);doc.text(pdfTxt(+t.cost?eur(t.cost):"-"),X.c,yy,{align:"right"});}
    doc.setDrawColor("#dde3df");doc.setLineWidth(.1);doc.line(M,y+rh,W-M,y+rh);y+=rh;});});
- if(RS){foot();return doc;}
+ if(RS||only){foot();return doc;}
  var md=monthData(k),T=0,B=0;
  need(14+6*(md.G.length+1));y+=6;doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor("#111");doc.text("Budgets",M,y);y+=5;
  doc.setFontSize(6.5);doc.setFont("helvetica","normal");doc.setTextColor("#777");doc.text("SECTION",X.n,y);doc.text("COÛTS",120,y,{align:"right"});doc.text("BUDGET",150,y,{align:"right"});doc.text("ÉCART",185,y,{align:"right"});y+=2;
@@ -1111,6 +1111,9 @@ function pdfCom(doc,first,k){k=k||"com";var RS=k==="rs",L=LS(k);var W=297,H=210,
    doc.setFont("helvetica","normal");doc.setTextColor(md.B&&cum>md.B?"#B8352A":"#111");doc.text(pdfTxt(eur(cum)),cx[nG+1],y+4,{align:"right"});doc.setDrawColor("#dde3df");doc.line(M,y+5.5,cx[nG+1]+4,y+5.5);y+=5.5;});
   doc.setFontSize(6.5);doc.setTextColor("#888");doc.text(pdfTxt("Chaque coût est compté dans le mois de début de sa tâche."),M,y+4);}
  foot();return doc;}
+function exportSel(){var keys=ui.sel.slice();if(!keys.length)return Promise.reject({code:"empty"});
+ if(ui.tab==="com"||ui.tab==="rs"){var k=ui.tab;return loadJsPDF().then(function(JS){var doc=new JS({orientation:"landscape",unit:"mm",format:"a4"});pdfCom(doc,true,k,keys);return saveFile("Retroplanning-"+(k==="rs"?"Reseaux":"Communication")+"-selection-"+iso(today)+".pdf",doc.output("blob"));});}
+ var g=gOf(ui.tab);if(!g)return Promise.reject({code:"empty"});return exportPdf(g,compute(g),null,keys.filter(function(x){return x.split("|")[0]===g.id;}).map(function(x){return x.split("|")[1];}));}
 function exportCom(k){k=k||"com";return loadJsPDF().then(function(JS){var doc=new JS({orientation:"landscape",unit:"mm",format:"a4"});pdfCom(doc,true,k);return saveFile("Retroplanning-"+(k==="rs"?"Reseaux":"Communication")+"-"+iso(today)+".pdf",doc.output("blob"));});}
 function exportAll(){return loadJsPDF().then(function(JS){var sh={doc:new JS({orientation:"landscape",unit:"mm",format:"a4"}),first:true},p=Promise.resolve();
  state.games.forEach(function(g){p=p.then(function(){return exportPdf(g,compute(g),sh);}).then(function(){sh.first=false;});});
@@ -1190,6 +1193,7 @@ app.addEventListener("click",function(e){var el=e.target.closest("[data-action]"
   exportPdf(pg,compute(pg)).then(function(){el.disabled=false;el.textContent="Exporter en PDF";},function(err){el.disabled=false;
    var cd=err&&err.code;el.textContent=cd==="declined"?"Exporter en PDF":cd?"PDF indisponible ici":"Échec du PDF";
    setTimeout(function(){el.textContent="Exporter en PDF";},2500);});return;}
+ if(a==="pdfsel"){var lb=el.textContent;busy(el,lb,exportSel);return;}
  if(a==="pdfall"){busy(el,"PDF complet",exportAll);return;}
  if(a==="pdfcom"){var pl=el.dataset.l||"com";busy(el,"Exporter en PDF",function(){return exportCom(pl);});return;}
  if(a==="jsonexp"){busy(el,"Sauvegarde JSON",exportJson);return;}
