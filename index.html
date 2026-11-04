@@ -764,7 +764,7 @@ function slackTxt(sl){return sl<0?"−"+(-sl)+" j":"+"+sl+" j";}
 
 var app=document.getElementById("app");
 function header(){return '<header class="top"><div><h1>Rétroplanning</h1><p class="sub">Big Budi Games, du '+fmt(today)+" à l'envoi en fabrication</p></div>"+
- '<div class="controls"><button class="btn evbtn" data-action="evmenu" aria-haspopup="true" aria-expanded="'+!!evPop+'">Dates importantes ▾</button><span class="chip" id="chip" role="status"></span><div class="io"><button class="btn" data-action="pdfall" title="Un seul PDF : les 3 jeux et l’onglet Communication">PDF complet</button>'+(ui.sel.length?'<button class="btn on" data-action="pdfsel" title="PDF avec seulement les lignes sélectionnées de cet onglet">PDF sélectionnés ('+ui.sel.length+')</button>':"")+'<button class="btn" data-action="jsonexp" title="Télécharge toutes les données dans un fichier, pour pouvoir les réimporter">Sauvegarde JSON</button><button class="btn" data-action="jsonimp" title="Recharge les données depuis une sauvegarde JSON">Importer JSON</button></div></div></header>';}
+ '<div class="controls"><button class="btn evbtn" data-action="evmenu" aria-haspopup="true" aria-expanded="'+!!evPop+'">Dates importantes ▾</button><span class="chip" id="chip" role="status"></span><div class="io"><button class="btn" data-action="pdfall" title="Un seul PDF : les 3 jeux et l’onglet Communication">PDF complet</button>'+(ui.sel.length?'<button class="btn on" data-action="pdfsel" title="PDF avec seulement les lignes sélectionnées de cet onglet">PDF sélectionnés ('+ui.sel.length+')</button>':"")+'<button class="btn" data-action="htmlexp" title="Télécharge la page complète avec toutes tes données : il suffit d’ouvrir ce fichier sur n’importe quel ordinateur">Exporter la page</button><button class="btn" data-action="jsonexp" title="Télécharge toutes les données dans un fichier, pour pouvoir les réimporter">Sauvegarde JSON</button><button class="btn" data-action="jsonimp" title="Recharge les données depuis une sauvegarde JSON">Importer JSON</button></div></div></header>';}
 
 function summary(C){return '<div class="cards">'+state.games.map(function(g){var c=C[g.id],k=cls(c.marge);
  return '<button class="gcard" style="--g:var(--'+g.color+')" data-action="tab" data-tab="'+g.id+'" aria-current="'+(ui.tab===g.id)+'"><span class="gname">'+esc(g.name)+'</span><span class="big">'+(c.daysLeft>=0?"J-"+c.daysLeft:"J+"+(-c.daysLeft))+'</span><span class="lbl">avant l\'envoi en fabrication, le '+fmt(c.fab)+'</span>'+
@@ -1120,6 +1120,9 @@ function exportAll(){return loadJsPDF().then(function(JS){var sh={doc:new JS({or
  return p.then(function(){pdfCom(sh.doc,false,"com");pdfCom(sh.doc,false,"rs");return saveFile("Retroplanning-BBG-complet-"+iso(today)+".pdf",sh.doc.output("blob"));});});}
 
 /* Sauvegarde JSON complète, réimportable */
+/* Page complète (HTML autonome) avec toutes les données intégrées : s'ouvre telle quelle sur un autre ordinateur */
+function exportHtml(){state.savedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+ return saveFile("Retroplanning-BBG-"+iso(today)+".html",new Blob([pageHtml()],{type:"text/html"}));}
 function exportJson(){var data={app:"retroplanning-bbg",exportedAt:new Date().toISOString(),state:state};
  return saveFile("Retroplanning-BBG-sauvegarde-"+iso(today)+".json",new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));}
 var impInput=document.createElement("input");impInput.type="file";impInput.accept=".json,application/json";impInput.style.display="none";document.body.appendChild(impInput);
@@ -1196,6 +1199,7 @@ app.addEventListener("click",function(e){var el=e.target.closest("[data-action]"
  if(a==="pdfsel"){var lb=el.textContent;busy(el,lb,exportSel);return;}
  if(a==="pdfall"){busy(el,"PDF complet",exportAll);return;}
  if(a==="pdfcom"){var pl=el.dataset.l||"com";busy(el,"Exporter en PDF",function(){return exportCom(pl);});return;}
+ if(a==="htmlexp"){busy(el,"Exporter la page",exportHtml);return;}
  if(a==="jsonexp"){busy(el,"Sauvegarde JSON",exportJson);return;}
  if(a==="jsonimp"){impInput.click();return;}
  if(a==="filter"){ui.filter=el.dataset.f;render();return;}

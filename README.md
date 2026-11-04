@@ -13,7 +13,10 @@ Settings → Pages → Source : *Deploy from a branch* → choisir la branche et
 Hors de Claude.ai, les modifications faites dans la page sont enregistrées **uniquement dans le navigateur** (localStorage).
 Pour les partager avec toute l'équipe, il faut mettre à jour `index.html` dans le dépôt.
 
-## Sauvegarde
+## Sauvegarde et changement d'ordinateur
+
+- **Exporter la page** (en haut à droite) télécharge un fichier HTML autonome qui contient
+  toute la page et toutes les données : il suffit de l'ouvrir sur le nouvel ordinateur.
 
 - **Sauvegarde JSON** (en haut à droite) télécharge toutes les données dans un fichier.
 - **Importer JSON** recharge une sauvegarde et remplace les données de la page.
